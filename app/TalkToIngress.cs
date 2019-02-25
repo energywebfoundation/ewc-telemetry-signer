@@ -2,18 +2,24 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Security;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 namespace TelemetrySigner
 {
     internal class TalkToIngress
     {
-        // Encoded RSAPublicKey
-        private const string PUB_KEY = "30818902818100C4A06B7B52F8D17DC1CCB47362" + 
-                                       "C64AB799AAE19E245A7559E9CEEC7D8AA4DF07CB0B21FDFD763C63A313A668FE9D764E" + 
-                                       "D913C51A676788DB62AF624F422C2F112C1316922AA5D37823CD9F43D1FC54513D14B2" + 
-                                       "9E36991F08A042C42EAAEEE5FE8E2CB10167174A359CEBF6FACC2C9CA933AD403137EE" + 
-                                       "2C3F4CBED9460129C72B0203010001";
+        private string _pk;
+        private const string ExpectedIngressFingerprint = "BE:B6:42:61:6A:F4:FB:1A:60:59:12:83:2E:42:FB:2A:B7:BF:8C:27:44:7F:1F:EF:A5:B4:BE:F1:71:AC:3B:F0";
+
+
+        public TalkToIngress(string base64PrivateKey)
+        {
+            // TODO: find way to store it securely in memory
+            _pk = base64PrivateKey;
+        }
+        
         internal bool SendRequest(string url, string jsonPayload)
         {
             if (string.IsNullOrWhiteSpace(jsonPayload))
@@ -54,9 +60,11 @@ namespace TelemetrySigner
             {
                 return false;
             }
-    
-            string pk = certificate.GetPublicKeyString();
-            return pk.Equals(PUB_KEY);
+
+            string certFingerprintFromIngress = certificate.GetCertHashString(HashAlgorithmName.SHA256);
+            // Check that fingerprint matches expected
+
+            return certFingerprintFromIngress == ExpectedIngressFingerprint;
         }
     }
 }
