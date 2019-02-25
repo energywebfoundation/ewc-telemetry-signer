@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 
 namespace TelemetrySigner
@@ -19,17 +20,20 @@ namespace TelemetrySigner
             _shouldExit = false;
         }
 
-        public void Read()
+        public void Read(ConcurrentQueue<string> telemetryQueue)
         {
+            if (telemetryQueue == null)
+            {
+                throw new ArgumentNullException("Queue can't be null",nameof(telemetryQueue));
+            }
+            
             var socketStream = File.OpenText(_namedPipe);
             
             while (!_shouldExit)
             {
                 // read forever from pipe
                 string line = socketStream.ReadLine();
-                Console.WriteLine($"Got Line: {line}");
-                
-                
+                telemetryQueue.Enqueue(line);
             }
         }
     }
