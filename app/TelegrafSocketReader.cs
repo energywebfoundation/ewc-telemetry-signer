@@ -24,10 +24,10 @@ namespace TelemetrySigner
         {
             if (telemetryQueue == null)
             {
-                throw new ArgumentNullException("Queue can't be null",nameof(telemetryQueue));
+                throw new ArgumentNullException(nameof(telemetryQueue),"Queue can't be null");
             }
             
-            var socketStream = File.OpenText(_namedPipe);
+            StreamReader socketStream = File.OpenText(_namedPipe);
             
             while (!_shouldExit)
             {
