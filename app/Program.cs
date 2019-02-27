@@ -5,10 +5,22 @@ using System.Threading;
 
 namespace TelemetrySigner
 {
+
+    public class SignerConfiguration
+    {
+        public string TelegrafSocket { get; set; }
+        public string IngressHost { get; set; }
+        public string NodeId { get; set; }
+        public string PersistanceDirectory { get; set; }
+        public string ParityEndpoiunt { get; set; }
+    }
+    
     class Program
     {
         private static ConcurrentQueue<string> _globalQueue;
         private static DateTime _lastFlush;
+
+        public static SignerConfiguration _configuration;
         
         private static string GetConfig(string name, string defaultValue)
         {
@@ -16,26 +28,38 @@ namespace TelemetrySigner
             return String.IsNullOrWhiteSpace(value) ? defaultValue : value;
         }
         
+        
+        
         static void Main(string[] args)
         {
-            Console.WriteLine("Telegraf signer starting...");
+            Console.WriteLine("Telemetry signer starting...");
             _lastFlush = DateTime.UtcNow;
 
-            string path = GetConfig("INFLUX_SOCKET","/var/run/influxdb.sock");
-            string ingressHost = GetConfig("TELEMETRY_INGRESS_HOST","localhost:5010");
-
+            _configuration = new SignerConfiguration
+            {
+                NodeId = GetConfig("TELEMETRY_NODE_ID","4816d758dd37833a3a5551001dac8a5fa737a342"),
+                IngressHost = GetConfig("TELEMETRY_INGRESS_HOST","localhost:5010"),
+                TelegrafSocket = GetConfig("INFLUX_SOCKET","/var/run/influxdb.sock"),
+                ParityEndpoiunt = GetConfig("RPC_ENDPOINT","localhost"),
+                PersistanceDirectory = GetConfig("TELEMETRY_INTERNAL_DIR","./")
+            };
 
             Console.WriteLine("Configuration:");
-            Console.WriteLine($"\tReading from: {path}");
-            Console.WriteLine($"\tSending telemetry to: {ingressHost}");
+            Console.WriteLine($"\tReading from: {_configuration.TelegrafSocket}");
+            Console.WriteLine($"\tSending telemetry to: {_configuration.IngressHost}");
+            Console.WriteLine($"\tUsing NodeId: {_configuration.NodeId}");
             
             // Prepare thread-safe queue
             _globalQueue = new ConcurrentQueue<string>();
             
+            
+            // Load private key
+            
+            
             // Prepare flush timer
             Timer flushTimer = new Timer(FlushToIngress,null,new TimeSpan(0,0,30),new TimeSpan(0,0,10));
             
-            var reader = new TelegrafSocketReader(path);
+            var reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
             reader.Read(_globalQueue);
 
         }
