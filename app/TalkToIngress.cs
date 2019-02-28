@@ -52,10 +52,18 @@ namespace TelemetrySigner
                 streamWriter.Flush();
                 streamWriter.Close();
             }
-                
-            HttpWebResponse httpResponse = (HttpWebResponse)wr.GetResponse();
-            return httpResponse.StatusCode == HttpStatusCode.Accepted;
-                
+
+            try
+            {
+                HttpWebResponse httpResponse = (HttpWebResponse) wr.GetResponse();
+                return httpResponse.StatusCode == HttpStatusCode.Accepted;
+            }
+            catch (WebException ex)
+            {
+                Console.WriteLine("ERROR: unable to send: " + ex.Message);
+                return false;
+            }
+
         }
         private static bool PinPublicKey(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors)
