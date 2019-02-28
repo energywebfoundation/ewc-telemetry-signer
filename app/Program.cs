@@ -105,7 +105,7 @@ namespace TelemetrySigner
             string jsonPayload = JsonConvert.SerializeObject(pkt,Formatting.Indented);
 
             Console.WriteLine("SENDING:" + jsonPayload);
-            return;
+            
             
             // Send data
             var tti = new TalkToIngress(_configuration.IngressHost,_configuration.IngressFingerprint);

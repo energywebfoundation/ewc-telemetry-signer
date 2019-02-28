@@ -30,7 +30,7 @@ namespace TelemetrySigner
                 throw new ArgumentException("URL is not https",nameof(ingressUrl));
             }
 
-            _fingerprint = ingressFingerPrint;
+            _fingerprint = ingressFingerPrint.Replace(":",String.Empty).ToUpperInvariant();
             _url = ingressUrl;
         }
         
@@ -42,7 +42,7 @@ namespace TelemetrySigner
             }
                 
             ServicePointManager.ServerCertificateValidationCallback = PinPublicKey;
-            HttpWebRequest wr = (HttpWebRequest)WebRequest.Create(_url);
+            HttpWebRequest wr = (HttpWebRequest)WebRequest.Create($"{_url}/api/ingress/influx");
             wr.ContentType = "application/json";
             wr.Method = "POST";
                 
@@ -54,7 +54,7 @@ namespace TelemetrySigner
             }
                 
             HttpWebResponse httpResponse = (HttpWebResponse)wr.GetResponse();
-            return httpResponse.StatusCode == HttpStatusCode.Created;
+            return httpResponse.StatusCode == HttpStatusCode.Accepted;
                 
         }
         private static bool PinPublicKey(object sender, X509Certificate certificate, X509Chain chain,
