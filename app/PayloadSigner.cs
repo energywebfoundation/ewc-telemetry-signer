@@ -1,10 +1,42 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace TelemetrySigner
 {
+
+    [Serializable]
+    public class SaltSizeException : Exception
+    {
+        //
+        // For guidelines regarding the creation of new exception types, see
+        //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/cpgenref/html/cpconerrorraisinghandlingguidelines.asp
+        // and
+        //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
+        //
+
+        public SaltSizeException()
+        {
+        }
+
+        public SaltSizeException(string message) : base(message)
+        {
+        }
+
+        public SaltSizeException(string message, Exception inner) : base(message, inner)
+        {
+        }
+
+        protected SaltSizeException(
+            SerializationInfo info,
+            StreamingContext context) : base(info, context)
+        {
+        }
+    }
+    
     public class PayloadSigner
     {
         private RSACryptoServiceProvider _rsa;
@@ -14,13 +46,14 @@ namespace TelemetrySigner
 
         public PayloadSigner(string nodeId, IKeyStore keyStore)
         {
-            _nodeId = nodeId;
-            _keystore = keyStore;
-        }
 
-        public void Init()
-        {
-            LoadKey();
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                throw new ArgumentException("Provide nodeId",nameof(nodeId));
+            }
+
+            _nodeId = nodeId;
+            _keystore = keyStore ?? throw new ArgumentException("Keystore not allowed to be null",nameof(keyStore));
         }
 
         public string SignPayload(string payload)
@@ -33,11 +66,11 @@ namespace TelemetrySigner
             byte[] signatureBytes = _rsa.SignData(payloadBytes, new SHA256CryptoServiceProvider());
             
             // Convert to bas64 and return
-            string base64Signatrue = Convert.ToBase64String(signatureBytes);
-            return base64Signatrue;
+            string base64Signature = Convert.ToBase64String(signatureBytes);
+            return base64Signature;
         }
         
-        private void LoadKey()
+        public void Init()
         {
             
             // Load private key
@@ -46,14 +79,14 @@ namespace TelemetrySigner
             try 
             {
                 // Load and decrypt the key from store
-                byte[] decryptedPrivateKey = LoadKeyFromDisk();
+                byte[] decryptedPrivateKey = LoadKeyFromStore();
 
                 // Load decrypted CSP blob into RSA
                 _rsa.ImportCspBlob(decryptedPrivateKey);
             }
-            catch
+            catch(Exception e)
             {
-                throw new Exception("Key files not present. Generate first using --genkey");
+                throw new KeypairNotFoundException("Key files not present. Generate first using --genkey",e);
             }
         }
 
@@ -122,7 +155,7 @@ namespace TelemetrySigner
             _keystore.SaveEncryptedKey(encryptedPrivateKey);
         }
 
-        private byte[] LoadKeyFromDisk()
+        private byte[] LoadKeyFromStore()
         {
             // Read encrypted private key from disk
             byte[] encryptedPk = _keystore.LoadEncryptedKey();
@@ -133,7 +166,7 @@ namespace TelemetrySigner
             // verify salt length
             if (salt.Length != 8)
             {
-                throw new Exception("Salt from store is not 64bits");
+                throw new SaltSizeException("Salt from store is not 64bits");
             }
 
             // derive keys from nodeid and salt
