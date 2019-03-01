@@ -92,8 +92,7 @@ namespace TelemetrySigner
                 telemetryToSend.Add(lineFromQueue);
             }
             
-            Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress...");
-            Console.WriteLine($"{_globalQueue.Count} still in queue...");
+            Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue.");
 
             var pkt = new TelemetryPacket
             {
@@ -102,28 +101,24 @@ namespace TelemetrySigner
                 Signature = _signer.SignPayload(string.Join(String.Empty,telemetryToSend))
             };
             
-            string jsonPayload = JsonConvert.SerializeObject(pkt,Formatting.Indented);
-
-            Console.WriteLine("SENDING:" + jsonPayload);
-            
-            
+            string jsonPayload = JsonConvert.SerializeObject(pkt);
+     
             // Send data
             var tti = new TalkToIngress(_configuration.IngressHost,_configuration.IngressFingerprint);
             bool sendSuccess = tti.SendRequest(jsonPayload);
             if (!sendSuccess)
             {
-                Console.WriteLine($"ERROR: Unable to send to ingress. Re-queueing data.");
                 telemetryToSend.ForEach(_globalQueue.Enqueue);
 
                 if (DateTime.UtcNow - _lastFlush > TimeSpan.FromMinutes(5))
                 {
                     // TODO: unable to send to ingress for 5 minutes - send by second channel
+                    Console.WriteLine($"ERROR: Unable to send to ingress for more then 5 minutes. Sending queue on second channel.");
                     
                 }
             }
             else
             {
-                Console.WriteLine("Send success!");
                 _lastFlush = DateTime.UtcNow;
             }
             
