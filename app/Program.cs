@@ -6,16 +6,6 @@ using Newtonsoft.Json;
 
 namespace TelemetrySigner
 {
-    public class TelemetryPacket
-    {
-        [JsonProperty("nodeid")]
-        public string NodeId { get; set; } 
-        [JsonProperty("payload")]
-        public IList<string> Payload { get; set; }
-        [JsonProperty("signature")]
-        public string Signature { get; set; }    
-    }
-    
     class Program
     {
         private static ConcurrentQueue<string> _globalQueue;
@@ -59,7 +49,7 @@ namespace TelemetrySigner
             if (args.Length > 0 &&  args[0] == "--genkeys")
             {
                 Console.WriteLine("Telemetry signer generating keys...");
-                PayloadSigner sig = new PayloadSigner(_configuration);
+                PayloadSigner sig = new PayloadSigner(_configuration, new FileKeyStore(_configuration.PersistanceDirectory));
                 string pubkey = sig.GenerateKeys();
                 Console.WriteLine("Public Key: " + pubkey);
                 return;
@@ -69,7 +59,7 @@ namespace TelemetrySigner
             _globalQueue = new ConcurrentQueue<string>();
             
             // load keys
-            _signer = new PayloadSigner(_configuration);
+            _signer = new PayloadSigner(_configuration,new FileKeyStore(_configuration.PersistanceDirectory));
             _signer.Init();
             
 
