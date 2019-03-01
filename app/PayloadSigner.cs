@@ -7,14 +7,14 @@ namespace TelemetrySigner
 {
     public class PayloadSigner
     {
-        private readonly SignerConfiguration _configuration;
         private RSACryptoServiceProvider _rsa;
         private readonly IKeyStore _keystore;
+        private readonly string _nodeId;
         const int KeySize = 4096;
 
-        public PayloadSigner(SignerConfiguration config, IKeyStore keyStore)
+        public PayloadSigner(string nodeId, IKeyStore keyStore)
         {
-            _configuration = config;
+            _nodeId = nodeId;
             _keystore = keyStore;
         }
 
@@ -88,7 +88,7 @@ namespace TelemetrySigner
             _keystore.SaveSalt(salt);
 
             // derive key and IV from nodeid and salt
-            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_configuration.NodeId, salt, 1024);
+            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_nodeId, salt, 1024);
             byte[] aesKey = rfc2898.GetBytes(32);
             byte[] aesIv = rfc2898.GetBytes(16);
 
@@ -137,7 +137,7 @@ namespace TelemetrySigner
             }
 
             // derive keys from nodeid and salt
-            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_configuration.NodeId, salt, 1024);
+            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_nodeId, salt, 1024);
             byte[] aesKey = rfc2898.GetBytes(32);
             byte[] aesIv = rfc2898.GetBytes(16);
 

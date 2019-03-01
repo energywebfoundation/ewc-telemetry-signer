@@ -1,14 +1,20 @@
 using System;
+using TelemetrySigner;
 using Xunit;
 
 namespace tests
 {
-    public class UnitTest1
+    public class PayloadSignerTests
     {
         [Fact]
-        public void Test1()
+        public void ShouldGenerateKeys()
         {
 
+            SignerConfiguration sc = new SignerConfiguration
+            {
+                NodeId = "node1"
+            };
+            PayloadSigner ps = new PayloadSigner();
         }
     }
 }

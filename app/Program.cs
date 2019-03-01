@@ -49,7 +49,7 @@ namespace TelemetrySigner
             if (args.Length > 0 &&  args[0] == "--genkeys")
             {
                 Console.WriteLine("Telemetry signer generating keys...");
-                PayloadSigner sig = new PayloadSigner(_configuration, new FileKeyStore(_configuration.PersistanceDirectory));
+                PayloadSigner sig = new PayloadSigner(_configuration.NodeId, new FileKeyStore(_configuration.PersistanceDirectory));
                 string pubkey = sig.GenerateKeys();
                 Console.WriteLine("Public Key: " + pubkey);
                 return;
@@ -59,14 +59,14 @@ namespace TelemetrySigner
             _globalQueue = new ConcurrentQueue<string>();
             
             // load keys
-            _signer = new PayloadSigner(_configuration,new FileKeyStore(_configuration.PersistanceDirectory));
+            _signer = new PayloadSigner(_configuration.NodeId,new FileKeyStore(_configuration.PersistanceDirectory));
             _signer.Init();
             
 
             // Prepare flush timer
             Timer flushTimer = new Timer(FlushToIngress,null,new TimeSpan(0,0,30),new TimeSpan(0,0,10));
             
-            var reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
+            TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
             reader.Read(_globalQueue);
 
         }
@@ -84,7 +84,7 @@ namespace TelemetrySigner
             
             Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue.");
 
-            var pkt = new TelemetryPacket
+            TelemetryPacket pkt = new TelemetryPacket
             {
                 NodeId = _configuration.NodeId,
                 Payload = telemetryToSend,
@@ -94,7 +94,7 @@ namespace TelemetrySigner
             string jsonPayload = JsonConvert.SerializeObject(pkt);
      
             // Send data
-            var tti = new TalkToIngress(_configuration.IngressHost,_configuration.IngressFingerprint);
+            TalkToIngress tti = new TalkToIngress(_configuration.IngressHost,_configuration.IngressFingerprint);
             bool sendSuccess = tti.SendRequest(jsonPayload);
             if (!sendSuccess)
             {
