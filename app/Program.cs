@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace TelemetrySigner
 {
-    class Program
+    internal static class Program
     {
         private static ConcurrentQueue<string> _globalQueue;
         private static DateTime _lastFlush;
@@ -17,16 +17,14 @@ namespace TelemetrySigner
         private static string GetConfig(string name, string defaultValue)
         {
             string value = Environment.GetEnvironmentVariable(name);
-            return String.IsNullOrWhiteSpace(value) ? defaultValue : value;
+            return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
         }
         
         
         
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
 
-            
-            
             Console.WriteLine("Telemetry signer starting...");
             _lastFlush = DateTime.UtcNow;
 
@@ -37,7 +35,7 @@ namespace TelemetrySigner
                 TelegrafSocket = GetConfig("INFLUX_SOCKET","/var/run/influxdb.sock"),
                 ParityEndpoiunt = GetConfig("RPC_ENDPOINT","localhost"),
                 PersistanceDirectory = GetConfig("TELEMETRY_INTERNAL_DIR","./"),
-                IngressFingerprint = GetConfig("TELEMETRY_INGRESS_FINGERPRINT",String.Empty),
+                IngressFingerprint = GetConfig("TELEMETRY_INGRESS_FINGERPRINT",string.Empty)
             };
 
             Console.WriteLine("Configuration:");
@@ -88,7 +86,7 @@ namespace TelemetrySigner
             {
                 NodeId = _configuration.NodeId,
                 Payload = telemetryToSend,
-                Signature = _signer.SignPayload(string.Join(String.Empty,telemetryToSend))
+                Signature = _signer.SignPayload(string.Join(string.Empty,telemetryToSend))
             };
             
             string jsonPayload = JsonConvert.SerializeObject(pkt);
@@ -103,7 +101,7 @@ namespace TelemetrySigner
                 if (DateTime.UtcNow - _lastFlush > TimeSpan.FromMinutes(5))
                 {
                     // TODO: unable to send to ingress for 5 minutes - send by second channel
-                    Console.WriteLine($"ERROR: Unable to send to ingress for more then 5 minutes. Sending queue on second channel.");
+                    Console.WriteLine("ERROR: Unable to send to ingress for more then 5 minutes. Sending queue on second channel.");
                     
                 }
             }

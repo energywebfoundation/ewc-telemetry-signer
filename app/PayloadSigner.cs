@@ -1,48 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Runtime.Serialization;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace TelemetrySigner
 {
-
-    [Serializable]
-    public class SaltSizeException : Exception
-    {
-        //
-        // For guidelines regarding the creation of new exception types, see
-        //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/cpgenref/html/cpconerrorraisinghandlingguidelines.asp
-        // and
-        //    http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dncscol/html/csharp07192001.asp
-        //
-
-        public SaltSizeException()
-        {
-        }
-
-        public SaltSizeException(string message) : base(message)
-        {
-        }
-
-        public SaltSizeException(string message, Exception inner) : base(message, inner)
-        {
-        }
-
-        protected SaltSizeException(
-            SerializationInfo info,
-            StreamingContext context) : base(info, context)
-        {
-        }
-    }
-    
     public class PayloadSigner
     {
         private RSACryptoServiceProvider _rsa;
         private readonly IKeyStore _keystore;
         private readonly string _nodeId;
-        const int KeySize = 4096;
+        private const int KeySize = 4096;
 
         public PayloadSigner(string nodeId, IKeyStore keyStore)
         {

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
-using System.Net;
 using FluentAssertions;
 using TelemetrySigner;
 using Xunit;
@@ -40,7 +39,7 @@ namespace tests
                 "line-1",
                 "line-2",
                 "line-3",
-                "line-4",
+                "line-4"
             };
             
             ConcurrentQueue<string> queue = new ConcurrentQueue<string>();

@@ -2,7 +2,6 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Security;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -30,7 +29,7 @@ namespace TelemetrySigner
                 throw new ArgumentException("URL is not https",nameof(ingressUrl));
             }
 
-            _fingerprint = ingressFingerPrint.Replace(":",String.Empty).ToUpperInvariant();
+            _fingerprint = ingressFingerPrint.Replace(":",string.Empty).ToUpperInvariant();
             _url = ingressUrl;
         }
         
