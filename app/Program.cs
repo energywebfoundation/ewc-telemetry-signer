@@ -93,7 +93,7 @@ namespace TelemetrySigner
      
             // Send data
             TalkToIngress tti = new TalkToIngress(_configuration.IngressHost,_configuration.IngressFingerprint);
-            bool sendSuccess = tti.SendRequest(jsonPayload);
+            bool sendSuccess = tti.SendRequest(jsonPayload).Result;
             if (!sendSuccess)
             {
                 telemetryToSend.ForEach(_globalQueue.Enqueue);
