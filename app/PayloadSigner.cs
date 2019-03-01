@@ -86,7 +86,7 @@ namespace TelemetrySigner
             }
             catch(Exception e)
             {
-                throw new KeypairNotFoundException("Key files not present. Generate first using --genkey",e);
+                throw new KeypairNotFoundException("Key files not present or invalid. Generate first using --genkey",e);
             }
         }
 
