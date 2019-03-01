@@ -12,7 +12,7 @@ namespace TelemetrySigner
 {
     public class TalkToIngress
     {
-        private static string _fingerprint;
+        private readonly string _fingerprint;
         private readonly string _url;
         private readonly HttpClient _client;
 
@@ -65,7 +65,7 @@ namespace TelemetrySigner
             }
         }
 
-        private static bool PinPublicKey(object sender, X509Certificate certificate, X509Chain chain,
+        public bool PinPublicKey(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors)
         {
             if (certificate == null)
