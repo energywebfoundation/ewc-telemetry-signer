@@ -1,19 +1,22 @@
 using System;
 using System.IO;
 using System.Net;
+using System.Net.Http;
 using System.Net.Security;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace TelemetrySigner
 {
-    internal class TalkToIngress
+    public class TalkToIngress
     {
-        private static string _fingerprint;
+        private readonly string _fingerprint;
         private readonly string _url;
+        private readonly HttpClient _client;
 
-        public TalkToIngress(string ingressUrl, string ingressFingerPrint)
+        public TalkToIngress(string ingressUrl, string ingressFingerPrint, HttpMessageHandler testHandler = null)
         {
             if (string.IsNullOrWhiteSpace(ingressUrl))
             {
@@ -30,42 +33,39 @@ namespace TelemetrySigner
                 throw new ArgumentException("URL is not https",nameof(ingressUrl));
             }
 
-            _fingerprint = ingressFingerPrint.Replace(":",String.Empty).ToUpperInvariant();
+            _fingerprint = ingressFingerPrint.Replace(":",string.Empty).ToUpperInvariant();
             _url = ingressUrl;
+            
+            // Set certificate verifier
+            ServicePointManager.ServerCertificateValidationCallback = PinPublicKey;
+
+            // Use the default handler when no specific handler is passed in.
+            _client = new HttpClient(testHandler ?? new HttpClientHandler());
         }
         
-        internal bool SendRequest(string jsonPayload)
+        public async Task<bool> SendRequest(string jsonPayload)
         {
             if (string.IsNullOrWhiteSpace(jsonPayload))
             {
                 throw new ArgumentException("Payload is empty",nameof(jsonPayload));
             }
-                
-            ServicePointManager.ServerCertificateValidationCallback = PinPublicKey;
-            HttpWebRequest wr = (HttpWebRequest)WebRequest.Create($"{_url}/api/ingress/influx");
-            wr.ContentType = "application/json";
-            wr.Method = "POST";
-                
-            using (StreamWriter streamWriter = new StreamWriter(wr.GetRequestStream()))
-            {
-                streamWriter.Write(jsonPayload);
-                streamWriter.Flush();
-                streamWriter.Close();
-            }
 
             try
             {
-                HttpWebResponse httpResponse = (HttpWebResponse) wr.GetResponse();
-                return httpResponse.StatusCode == HttpStatusCode.Accepted;
+                HttpResponseMessage response = await _client.PostAsync($"{_url}/api/ingress/influx", 
+                    new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
+            
+            
+                return response.StatusCode == HttpStatusCode.Accepted;    
             }
-            catch (WebException ex)
+            catch (Exception ex)
             {
                 Console.WriteLine("ERROR: unable to send: " + ex.Message);
                 return false;
             }
-
         }
-        private static bool PinPublicKey(object sender, X509Certificate certificate, X509Chain chain,
+
+        public bool PinPublicKey(object sender, X509Certificate certificate, X509Chain chain,
             SslPolicyErrors sslPolicyErrors)
         {
             if (certificate == null)

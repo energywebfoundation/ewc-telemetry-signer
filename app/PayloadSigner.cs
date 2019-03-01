@@ -7,18 +7,21 @@ namespace TelemetrySigner
 {
     public class PayloadSigner
     {
-        private readonly SignerConfiguration _configuration;
         private RSACryptoServiceProvider _rsa;
-        const int keySize = 4096;
+        private readonly IKeyStore _keystore;
+        private readonly string _nodeId;
+        private const int KeySize = 4096;
 
-        public PayloadSigner(SignerConfiguration config)
+        public PayloadSigner(string nodeId, IKeyStore keyStore)
         {
-            _configuration = config;
-        }
 
-        public void Init()
-        {
-            LoadKey();
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                throw new ArgumentException("Provide nodeId",nameof(nodeId));
+            }
+
+            _nodeId = nodeId;
+            _keystore = keyStore ?? throw new ArgumentException("Keystore not allowed to be null",nameof(keyStore));
         }
 
         public string SignPayload(string payload)
@@ -31,41 +34,34 @@ namespace TelemetrySigner
             byte[] signatureBytes = _rsa.SignData(payloadBytes, new SHA256CryptoServiceProvider());
             
             // Convert to bas64 and return
-            string base64Signatrue = Convert.ToBase64String(signatureBytes);
-            return base64Signatrue;
+            string base64Signature = Convert.ToBase64String(signatureBytes);
+            return base64Signature;
         }
         
-        private void LoadKey()
+        public void Init()
         {
             
-            string pkFile = Path.Combine(_configuration.PersistanceDirectory, "signing.key");
-            string saltFilePath = Path.Combine(_configuration.PersistanceDirectory, "signing.salt");
-            
             // Load private key
-            _rsa = new RSACryptoServiceProvider(keySize);
+            _rsa = new RSACryptoServiceProvider(KeySize);
                 
-            // Only if both files are there wqe can load the key
-            if (File.Exists(pkFile) && File.Exists(saltFilePath))
+            try 
             {
-                // Load and decrypt the key from disk
-                byte[] decryptedPrivateKey = LoadKeyFromDisk(pkFile, saltFilePath);
+                // Load and decrypt the key from store
+                byte[] decryptedPrivateKey = LoadKeyFromStore();
 
                 // Load decrypted CSP blob into RSA
                 _rsa.ImportCspBlob(decryptedPrivateKey);
             }
-            else
+            catch(Exception e)
             {
-                throw new Exception("Key files not present. Generate first using --genkey");
+                throw new KeypairNotFoundException("Key files not present or invalid. Generate first using --genkey",e);
             }
         }
 
         public string GenerateKeys()
         {
-            string pkFile = Path.Combine(_configuration.PersistanceDirectory, "signing.key");
-            string saltFilePath = Path.Combine(_configuration.PersistanceDirectory, "signing.salt");
 
-            
-            using (var rsa = new RSACryptoServiceProvider(keySize))
+            using (var rsa = new RSACryptoServiceProvider(KeySize))
             {
                 // Generate new keypair when not all key files found on disk
                 byte[] publicKey = rsa.ExportCspBlob(false);
@@ -73,14 +69,14 @@ namespace TelemetrySigner
         
                 // Save new private key to disk so it can be reloaded after service restart
                 byte[] privateKey = rsa.ExportCspBlob(true);
-                StoreKeyOnDisk(privateKey, saltFilePath, pkFile);
+                StoreKey(privateKey);
                 return publicKeyBase64;    
             }
             
             
         }
 
-        private void StoreKeyOnDisk(byte[] privateKey, string saltFilePath, string pkFile)
+        private void StoreKey(byte[] privateKey)
         {
             // encrypt private key to be stored on disk using RFC2898 derived keys and AES256 encryption
             byte[] salt = new byte[8];
@@ -90,10 +86,10 @@ namespace TelemetrySigner
             rnd.GetBytes(salt);
 
             // store salt
-            File.WriteAllBytes(saltFilePath, salt);
+            _keystore.SaveSalt(salt);
 
             // derive key and IV from nodeid and salt
-            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_configuration.NodeId, salt, 1024);
+            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_nodeId, salt, 1024);
             byte[] aesKey = rfc2898.GetBytes(32);
             byte[] aesIv = rfc2898.GetBytes(16);
 
@@ -124,25 +120,25 @@ namespace TelemetrySigner
             }
 
             // Write private key to disk
-            File.WriteAllBytes(pkFile, encryptedPrivateKey);
+            _keystore.SaveEncryptedKey(encryptedPrivateKey);
         }
 
-        private byte[] LoadKeyFromDisk(string pkFile, string saltFilePath)
+        private byte[] LoadKeyFromStore()
         {
             // Read encrypted private key from disk
-            byte[] encryptedPk = File.ReadAllBytes(pkFile);
+            byte[] encryptedPk = _keystore.LoadEncryptedKey();
 
             // Read Salt from disk
-            byte[] salt = File.ReadAllBytes(saltFilePath);
+            byte[] salt = _keystore.LoadSalt();
 
             // verify salt length
             if (salt.Length != 8)
             {
-                throw new Exception("Salt from disk is not 64bits");
+                throw new SaltSizeException("Salt from store is not 64bits");
             }
 
             // derive keys from nodeid and salt
-            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_configuration.NodeId, salt, 1024);
+            Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_nodeId, salt, 1024);
             byte[] aesKey = rfc2898.GetBytes(32);
             byte[] aesIv = rfc2898.GetBytes(16);
 

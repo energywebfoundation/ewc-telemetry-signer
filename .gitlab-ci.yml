@@ -24,7 +24,7 @@ test-dotnet:
   script:
     - dotnet restore
     - dotnet build
-    - dotnet test --no-build -v=normal tests
+    - dotnet test --no-build -v=normal tests /p:CollectCoverage=true /p:Exclude="[xunit.*]*"
 
 package-docker:
   stage: package

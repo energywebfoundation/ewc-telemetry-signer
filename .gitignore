@@ -3,4 +3,5 @@
 bin/
 obj/
 signing.*
+coverage.json
 
