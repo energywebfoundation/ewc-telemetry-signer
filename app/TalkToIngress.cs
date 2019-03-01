@@ -7,7 +7,7 @@ using System.Security.Cryptography.X509Certificates;
 
 namespace TelemetrySigner
 {
-    internal class TalkToIngress
+    public class TalkToIngress
     {
         private static string _fingerprint;
         private readonly string _url;
