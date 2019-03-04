@@ -49,7 +49,8 @@ namespace TelemetrySigner
                 Console.WriteLine("Telemetry signer generating keys...");
                 PayloadSigner sig = new PayloadSigner(_configuration.NodeId, new FileKeyStore(_configuration.PersistanceDirectory));
                 string pubkey = sig.GenerateKeys();
-                Console.WriteLine("Public Key: " + pubkey);
+                Console.WriteLine("This nodes Public Key:");
+                Console.WriteLine(pubkey);
                 return;
             }
             
