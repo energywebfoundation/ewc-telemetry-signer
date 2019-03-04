@@ -76,7 +76,12 @@ namespace TelemetrySigner
             string certFingerprintFromIngress = certificate.GetCertHashString(HashAlgorithmName.SHA256);
             // Check that fingerprint matches expected
 
-            return certFingerprintFromIngress == _fingerprint;
+            bool fingerPrintMatch = certFingerprintFromIngress == _fingerprint;
+            if (!fingerPrintMatch)
+            {
+                Console.WriteLine($"WARN: Fingerprints don't match: {certFingerprintFromIngress} - expected: {_fingerprint}");
+            }
+            return fingerPrintMatch;
         }
     }
 }
