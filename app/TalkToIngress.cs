@@ -60,7 +60,7 @@ namespace TelemetrySigner
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ERROR: unable to send: " + ex.Message);
+                Console.WriteLine("ERROR: unable to send: " + ex.Message + " ==> " + ex.InnerException?.Message);
                 return false;
             }
         }
