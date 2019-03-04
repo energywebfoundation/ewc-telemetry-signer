@@ -73,7 +73,11 @@ namespace TelemetrySigner
         private static void FlushToIngress(object state)
         {
             // Flush to ingress if more than 10 telemetry recordings -or- last flush older that 1 minute
-            if (_globalQueue.Count <= 10 && DateTime.UtcNow - _lastFlush <= new TimeSpan(0, 1, 0)) return;
+            if (_globalQueue.Count <= 10 && DateTime.UtcNow - _lastFlush <= new TimeSpan(0, 1, 0))
+            {
+                Console.WriteLine($"Not flushing: {_globalQueue.Count} Queued - {(DateTime.UtcNow - _lastFlush).TotalSeconds} seconds since flush");
+                return;
+            }
             
             List<string> telemetryToSend = new List<string>();
             while (telemetryToSend.Count < 50 && _globalQueue.TryDequeue(out string lineFromQueue))
