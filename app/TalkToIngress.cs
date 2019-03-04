@@ -36,11 +36,11 @@ namespace TelemetrySigner
             _fingerprint = ingressFingerPrint.Replace(":",string.Empty).ToUpperInvariant();
             _url = ingressUrl;
             
-            // Set certificate verifier
-            ServicePointManager.ServerCertificateValidationCallback = PinPublicKey;
 
             // Use the default handler when no specific handler is passed in.
-            _client = new HttpClient(testHandler ?? new HttpClientHandler());
+            var handler = new HttpClientHandler {ServerCertificateCustomValidationCallback = PinPublicKey};
+            _client = new HttpClient(testHandler ?? handler);
+            
         }
         
         public async Task<bool> SendRequest(string jsonPayload)
