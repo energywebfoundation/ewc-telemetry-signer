@@ -20,8 +20,6 @@ namespace TelemetrySigner
             return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
         }
         
-        
-        
         private static void Main(string[] args)
         {
 
@@ -63,7 +61,8 @@ namespace TelemetrySigner
             
 
             // Prepare flush timer
-            Timer flushTimer = new Timer(FlushToIngress,null,new TimeSpan(0,0,30),new TimeSpan(0,0,10));
+            Timer flushTimer = new Timer(FlushToIngress);
+            flushTimer.Change(5000, 10000);
             
             TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
             reader.Read(_globalQueue);
