@@ -1,3 +1,4 @@
+lcov.*
 .idea/
 *.user
 bin/
