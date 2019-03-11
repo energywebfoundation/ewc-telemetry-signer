@@ -1,3 +1,4 @@
+using System;
 using System.IO;
 
 namespace TelemetrySigner
@@ -9,6 +10,17 @@ namespace TelemetrySigner
 
         public FileKeyStore(string basePath)
         {
+
+            if (string.IsNullOrWhiteSpace(basePath))
+            {
+                throw new ArgumentException("Base path given can't be empty or null",nameof(basePath));
+            }
+            
+            if (!Directory.Exists(basePath))
+            {
+                throw new DirectoryNotFoundException("Base path does not exist or isn't a directory");
+            }
+            
             _pkFile = Path.Combine(basePath, "signing.key");
             _saltFilePath = Path.Combine(basePath, "signing.salt");
         }
