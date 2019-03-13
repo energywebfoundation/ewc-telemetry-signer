@@ -27,7 +27,7 @@ test-dotnet:
     - dotnet restore
     - dotnet build
     - dotnet test --no-build -v=normal tests /p:CollectCoverage=true /p:Exclude="[xunit.*]*" --logger "trx;LogFileName=TestResults.trx"
-    - trx2junit TestResults/TestResults.trx
+    - trx2junit tests/TestResults/TestResults.trx
   artifacts:
     reports:
       junit: tests/TestResults/TestResults.xml
