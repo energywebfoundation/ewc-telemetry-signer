@@ -22,9 +22,36 @@ test-dotnet:
     - short-jobs
   image: microsoft/dotnet:2.2-sdk
   script:
+    - dotnet tool install -g trx2junit
+    - export PATH="$PATH:/root/.dotnet/tools"
     - dotnet restore
     - dotnet build
-    - dotnet test --no-build -v=normal tests
+    - dotnet test --no-build -v=normal tests /p:CollectCoverage=true /p:Exclude="[xunit.*]*" --logger "trx;LogFileName=TestResults.trx"
+    - trx2junit tests/TestResults/TestResults.trx
+  artifacts:
+    reports:
+      junit: tests/TestResults/TestResults.xml
+
+code-quality:
+  stage: test
+  image: docker:stable
+  tags:
+    - ci2
+  variables:
+    DOCKER_DRIVER: overlay2
+  allow_failure: true
+  services:
+    - docker:stable-dind
+  script:
+    - export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
+    - docker run
+        --env SOURCE_CODE="$PWD"
+        --volume "$PWD":/code
+        --volume /var/run/docker.sock:/var/run/docker.sock
+        "registry.gitlab.com/gitlab-org/security-products/codequality:$SP_VERSION" /code
+  artifacts:
+    reports:
+      codequality: gl-code-quality-report.json
 
 package-docker:
   stage: package

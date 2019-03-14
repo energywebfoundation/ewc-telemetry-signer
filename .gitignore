@@ -1,6 +1,8 @@
+lcov.*
 .idea/
 *.user
 bin/
 obj/
-
-
+signing.*
+coverage.json
+TestResults/
