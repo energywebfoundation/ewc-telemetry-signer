@@ -6,3 +6,6 @@ obj/
 signing.*
 coverage.json
 TestResults/
+*.key
+*.salt
+.vscode/
