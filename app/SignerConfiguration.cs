@@ -8,5 +8,6 @@ namespace TelemetrySigner
         public string PersistanceDirectory { get; set; }
         public string ParityEndpoiunt { get; set; }
         public string IngressFingerprint { get; set; }
+        public string ParityWebSocketAddress { get; set; }
     }
 }

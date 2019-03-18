@@ -33,7 +33,8 @@ namespace TelemetrySigner
                 TelegrafSocket = GetConfig("INFLUX_SOCKET","/var/run/influxdb.sock"),
                 ParityEndpoiunt = GetConfig("RPC_ENDPOINT","localhost"),
                 PersistanceDirectory = GetConfig("TELEMETRY_INTERNAL_DIR","./"),
-                IngressFingerprint = GetConfig("TELEMETRY_INGRESS_FINGERPRINT",string.Empty)
+                IngressFingerprint = GetConfig("TELEMETRY_INGRESS_FINGERPRINT",string.Empty),
+                ParityWebSocketAddress = GetConfig("PARITY_WEB_SOCKET", string.Empty)
             };
 
             Console.WriteLine("Configuration:");
@@ -66,6 +67,16 @@ namespace TelemetrySigner
             
             TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
             reader.Read(_globalQueue);
+
+            //Real time telemetry subscription and sending to ingress
+            RealTimeTelemetryManager ps = new RealTimeTelemetryManager(
+                _configuration.NodeId, 
+                _configuration.ParityEndpoiunt, 
+                _configuration.ParityWebSocketAddress, 
+                (_configuration.IngressHost+"/api/ingress/realtime"), 
+                _configuration.IngressFingerprint, _signer, true );
+
+            ps.subscribeAndPost();
 
         }
 

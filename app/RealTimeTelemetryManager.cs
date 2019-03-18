@@ -11,7 +11,7 @@ using System.Net;
 
 namespace TelemetrySigner
 {
-    class ParitySubscribe
+    class RealTimeTelemetryManager
     {
         private WebClient _webClient;
         private string _jsonRpcURL;
@@ -22,7 +22,7 @@ namespace TelemetrySigner
 
         UTF8Encoding encoder = new UTF8Encoding();
 
-        public ParitySubscribe(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, bool verbose)
+        public RealTimeTelemetryManager(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, bool verbose)
         {
             _webSocketURI = webSocketURL;
             _jsonRpcURL = jsonRpcURL;
@@ -35,31 +35,35 @@ namespace TelemetrySigner
         }
         private const bool verbose = true;
 
-        public async Task subscribe()
+        public void subscribeAndPost()
         {
             ClientWebSocket webSocket = null;
-            try
+
+            webSocket = new ClientWebSocket();
+            //do
             {
-                webSocket = new ClientWebSocket();
-                do
+                try
                 {
-                    if (webSocket.State != WebSocketState.Connecting)
+                     if (webSocket.State != WebSocketState.Connecting 
+                     || webSocket.State != WebSocketState.Open
+                     )
                     {
-                        await Connect(webSocket);
+                        Console.WriteLine("Connecting to websocket for Realtime Telemetry");
+                        Connect(webSocket).Wait();
                     }
-                    //reconnect the websocket right away if connection drops
-                } while (webSocket.State != WebSocketState.Open);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Exception occurred in WebSocket Connection: {0}", ex);
-            }
-            finally
-            {
-                if (webSocket != null)
-                    webSocket.Dispose();
-            }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception occurred in WebSocket Connection: {0}", ex);
+                    //wait 20 second and re attempt operations (websocket connection to parity, data pushing to ingress)
+                    Thread.Sleep(20000);
+                }
+                //reconnect the websocket right away if connection drops
+            } while (true);
         }
+
+
+
 
         private async Task Connect(ClientWebSocket webSocket)
         {
@@ -169,7 +173,7 @@ namespace TelemetrySigner
                         Console.WriteLine("New Block received");
                         Console.WriteLine("block num: {0}", rttp.BlockNum);
                         Console.WriteLine("block hash: {0}", rttp.BlockHash);
-                        Console.WriteLine("block time stamp: {0}",rttp.BlockTS);
+                        Console.WriteLine("block time stamp: {0}", rttp.BlockTS);
                         Console.WriteLine("Tx Count: {0}", rttp.NumTxInBlock);
                         Console.WriteLine("Gas Limit: {0}", Convert.ToInt64(gasLimit, 16));
                         Console.WriteLine("Gas Used: {0}", Convert.ToInt64(gasUsed, 16));
@@ -196,7 +200,7 @@ namespace TelemetrySigner
             try
             {
                 //random pause of 55ms so we dnt have spike on ingress
-                Thread.Sleep(new Random().Next(1,500));
+                Thread.Sleep(new Random().Next(1, 500));
 
                 //push data to ingress real time telemetry endpoint
                 bool sendSuccess = _tti.SendRequest(JsonConvert.SerializeObject(rtt)).Result;
@@ -206,19 +210,17 @@ namespace TelemetrySigner
                     Console.WriteLine("ERROR: Unable to send to ingress for more then. Use Sending queue on second channel.");
 
                 }
+                else
+                {
+                    Console.WriteLine("Real Time Telemetry Block data sent to Ingress Block # {0}", rtt.Payload.BlockNum);
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine("ERROR Occurred While sending data to Ingress.");
             }
 
-            Console.WriteLine("Real Time Telemetry Block data sent to Ingress Block # {0}", rtt.Payload.BlockNum);
-
-
         }
-
-
-
 
     }
 
