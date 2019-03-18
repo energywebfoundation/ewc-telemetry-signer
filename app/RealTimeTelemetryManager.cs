@@ -11,7 +11,7 @@ using System.Net;
 
 namespace TelemetrySigner
 {
-    class RealTimeTelemetryManager
+    public class RealTimeTelemetryManager
     {
         private WebClient _webClient;
         private string _jsonRpcURL;
@@ -35,7 +35,7 @@ namespace TelemetrySigner
         }
         private const bool verbose = true;
 
-        public void subscribeAndPost()
+        public void subscribeAndPost(bool reAttemptConnection)
         {
             ClientWebSocket webSocket = null;
 
@@ -44,9 +44,9 @@ namespace TelemetrySigner
             {
                 try
                 {
-                     if (webSocket.State != WebSocketState.Connecting 
-                     || webSocket.State != WebSocketState.Open
-                     )
+                    if (webSocket.State != WebSocketState.Connecting
+                    || webSocket.State != WebSocketState.Open
+                    )
                     {
                         Console.WriteLine("Connecting to websocket for Realtime Telemetry");
                         Connect(webSocket).Wait();
@@ -55,11 +55,11 @@ namespace TelemetrySigner
                 catch (Exception ex)
                 {
                     Console.WriteLine("Exception occurred in WebSocket Connection: {0}", ex);
-                    //wait 20 second and re attempt operations (websocket connection to parity, data pushing to ingress)
-                    Thread.Sleep(20000);
+                    //wait 20 second and re attempt operations based on flag(websocket connection to parity, data pushing to ingress)
+                    if (reAttemptConnection) { Thread.Sleep(20000); }
                 }
                 //reconnect the websocket right away if connection drops
-            } while (true);
+            } while (reAttemptConnection) ;
         }
 
 

@@ -76,7 +76,7 @@ namespace TelemetrySigner
                 (_configuration.IngressHost+"/api/ingress/realtime"), 
                 _configuration.IngressFingerprint, _signer, true );
 
-            ps.subscribeAndPost();
+            ps.subscribeAndPost(true);
 
         }
 
