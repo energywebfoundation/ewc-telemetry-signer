@@ -11,6 +11,14 @@ namespace tests
     public class RealTimeTelemetryManagerTests
     {
 
+        public RealTimeTelemetryManagerTests()
+        {
+            PayloadSigner sig = new PayloadSigner(
+                "4816d758dd37833a3a5551001dac8a5fa737a342", 
+                new FileKeyStore("./"));
+            string pubkey = sig.GenerateKeys();
+        }
+
         [Fact]
         void InvalidParityConnectionShouldNotPass()
         {

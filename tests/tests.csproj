@@ -17,8 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\app\TelemetrySigner.csproj" />
-            <None Include="signing.key" CopyToOutputDirectory="Always" /> 
-         <None Include="signing.salt" CopyToOutputDirectory="Always" /> 
   </ItemGroup>
 
 </Project>
