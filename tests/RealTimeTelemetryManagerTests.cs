@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using Newtonsoft.Json;
 using TelemetrySigner;
+using TelemetrySigner.Models;
 using Xunit;
 
 namespace tests
@@ -39,7 +40,7 @@ namespace tests
             var currentConsoleOut = Console.Out;
             using (var cop = new ConsoleOutputCapturer())
             {
-                mgr.subscribeAndPost(false);
+                mgr.SubscribeAndPost(false);
                 string ret = cop.GetOuput();
                 Assert.True(ret.Contains("Connection refused"));
             }

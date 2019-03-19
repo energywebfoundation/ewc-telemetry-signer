@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Newtonsoft.Json;
 using TelemetrySigner;
+using TelemetrySigner.Models;
 using Xunit;
 
 namespace tests

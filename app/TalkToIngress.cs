@@ -13,10 +13,9 @@ namespace TelemetrySigner
     public class TalkToIngress
     {
         private readonly string _fingerprint;
-        //private readonly string _url;
         private readonly HttpClient _client;
 
-        private string _endPoint;
+        private readonly string _endPoint;
 
         public TalkToIngress(string endPoint, string ingressFingerPrint, HttpMessageHandler testHandler = null)
         {
