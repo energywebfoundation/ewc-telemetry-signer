@@ -62,6 +62,16 @@ namespace TelemetrySigner
             _signer.Init();
             
 
+            //Real time telemetry subscription and sending to ingress
+            RealTimeTelemetryManager ps = new RealTimeTelemetryManager(
+                _configuration.NodeId, 
+                _configuration.ParityEndpoint, 
+                _configuration.ParityWebSocketAddress,
+                $"{_configuration.IngressHost}/api/ingress/realtime", 
+                _configuration.IngressFingerprint, _signer, true );
+
+            ps.SubscribeAndPost(true);
+            
             // Prepare flush timer
             Timer flushTimer = new Timer(FlushToIngress);
             flushTimer.Change(5000, 10000);
@@ -69,15 +79,7 @@ namespace TelemetrySigner
             TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
             reader.Read(_globalQueue);
 
-            //Real time telemetry subscription and sending to ingress
-            RealTimeTelemetryManager ps = new RealTimeTelemetryManager(
-                _configuration.NodeId, 
-                _configuration.ParityEndpoint, 
-                _configuration.ParityWebSocketAddress, 
-                (_configuration.IngressHost+"/api/ingress/realtime"), 
-                _configuration.IngressFingerprint, _signer, true );
-
-            ps.SubscribeAndPost(true);
+           
 
         }
 
