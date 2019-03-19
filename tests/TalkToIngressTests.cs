@@ -27,7 +27,7 @@ namespace tests
             const string fingerPrint = "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E";
             Assert.Throws<ArgumentException>(() =>
             {
-                _ = new TalkToIngress(url,fingerPrint);
+                _ = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint);
             });
         }
         
@@ -43,7 +43,7 @@ namespace tests
             
             var ex = Record.Exception(() =>
             {
-                _ = new TalkToIngress(url,fingerPrint);
+                _ = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint);
             });
 
             // check that no exception was thrown
@@ -59,7 +59,7 @@ namespace tests
         {
             Assert.Throws<ArgumentException>(() =>
             {
-                _ = new TalkToIngress("https://foo.bar",fingerPrint);
+                _ = new TalkToIngress("https://foo.bar/api/ingress/influx",fingerPrint);
             });
         }
         
@@ -119,7 +119,7 @@ namespace tests
             
             
             // run test code
-            var tti = new TalkToIngress(url,fingerPrint,handlerMock.Object);
+            var tti = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint,handlerMock.Object);
             bool sendResult = tti.SendRequest(expectedPayload).Result;
             
             Assert.True(payloadCorrect);
@@ -172,7 +172,7 @@ namespace tests
             
             
             // run test code
-            var tti = new TalkToIngress(url,fingerPrint,handlerMock.Object);
+            var tti = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint,handlerMock.Object);
             bool sendResult = tti.SendRequest(expectedPayload).Result;
             
             Assert.True(payloadCorrect);
@@ -221,7 +221,7 @@ namespace tests
             
             
             // run test code
-            var tti = new TalkToIngress(url,fingerPrint,handlerMock.Object);
+            var tti = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint,handlerMock.Object);
             bool sendResult = tti.SendRequest(expectedPayload).Result;
             
             Assert.True(payloadCorrect);
@@ -243,7 +243,7 @@ namespace tests
                 .Returns(fingerPrint.Replace(":",string.Empty).ToUpperInvariant())
                 .Verifiable();
 
-            var tti = new TalkToIngress(url,fingerPrint);
+            var tti = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint);
             bool certVerifyResult = tti.PinPublicKey(new object(),certMock.Object,null,SslPolicyErrors.None);
             
             certMock.Verify();
@@ -265,7 +265,7 @@ namespace tests
                 .Returns(badFingerPrint.Replace(":",string.Empty).ToUpperInvariant())
                 .Verifiable();
 
-            var tti = new TalkToIngress(url,expectedFingerPrint);
+            var tti = new TalkToIngress(url+ "/api/ingress/influx",expectedFingerPrint);
             bool certVerifyResult = tti.PinPublicKey(new object(),certMock.Object,null,SslPolicyErrors.None);
             
             certMock.Verify();
@@ -280,7 +280,7 @@ namespace tests
             const string url = "https://foo.bar";
 
             
-            var tti = new TalkToIngress(url,fingerPrint);
+            var tti = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint);
             bool certVerifyResult = tti.PinPublicKey(new object(),null,null,SslPolicyErrors.None);
             
             

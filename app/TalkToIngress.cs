@@ -13,14 +13,16 @@ namespace TelemetrySigner
     public class TalkToIngress
     {
         private readonly string _fingerprint;
-        private readonly string _url;
+        //private readonly string _url;
         private readonly HttpClient _client;
 
-        public TalkToIngress(string ingressUrl, string ingressFingerPrint, HttpMessageHandler testHandler = null)
+        private string _endPoint;
+
+        public TalkToIngress(string endPoint, string ingressFingerPrint, HttpMessageHandler testHandler = null)
         {
-            if (string.IsNullOrWhiteSpace(ingressUrl))
+            if (string.IsNullOrWhiteSpace(endPoint))
             {
-                throw new ArgumentException("URL is empty",nameof(ingressUrl));
+                throw new ArgumentException("URL is empty",nameof(endPoint));
             }
             
             if (string.IsNullOrWhiteSpace(ingressFingerPrint))
@@ -28,13 +30,14 @@ namespace TelemetrySigner
                 throw new ArgumentException("Fingerprint is empty",nameof(ingressFingerPrint));
             }
     
-            if (!ingressUrl.StartsWith("https://"))
+            if (!endPoint.StartsWith("https://"))
             {
-                throw new ArgumentException("URL is not https",nameof(ingressUrl));
+                throw new ArgumentException("URL is not https",nameof(endPoint));
             }
 
             _fingerprint = ingressFingerPrint.Replace(":",string.Empty).ToUpperInvariant();
-            _url = ingressUrl;
+            //_url = ingressUrl;
+            _endPoint = endPoint;
             
 
             // Use the default handler when no specific handler is passed in.
@@ -52,7 +55,7 @@ namespace TelemetrySigner
 
             try
             {
-                HttpResponseMessage response = await _client.PostAsync($"{_url}/api/ingress/influx", 
+                HttpResponseMessage response = await _client.PostAsync(_endPoint , //$"{_url}/api/ingress/influx", 
                     new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
             
             
