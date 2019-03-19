@@ -1,31 +1,7 @@
 using Newtonsoft.Json;
 
-namespace TelemetrySigner
+namespace TelemetrySigner.Models
 {
-    /// <summary>
-    /// The model class for Real Time Telemetry
-    /// </summary>
-    public class RealTimeTelemetry
-    {
-        /// <summary>
-        /// The property for nodeid
-        /// </summary>
-        [JsonProperty("nodeid")]
-        public string NodeId { get; set; }
-
-        /// <summary>
-        /// The property for payload
-        /// </summary>
-        [JsonProperty("payload")]
-        public RealTimeTelemetryPayload Payload { get; set; }
-
-        /// <summary>
-        /// The property for signature
-        /// </summary>
-        [JsonProperty("signature")]
-        public string Signature { get; set; }
-    }
-
     /// <summary>
     /// The model class for Real Time Telemetry Payload
     /// </summary>
@@ -72,5 +48,11 @@ namespace TelemetrySigner
         /// </summary>
         [JsonProperty("numtxinblock")]
         public ushort NumTxInBlock { get; set; }
+
+        [JsonProperty("gaslimit")]
+        public long GasLimit { get; set; }
+
+        [JsonProperty("gasused")]
+        public long GasUsed { get; set; }
     }
 }

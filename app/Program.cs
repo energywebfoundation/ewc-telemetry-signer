@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
 using Newtonsoft.Json;
+using TelemetrySigner.Models;
 
 namespace TelemetrySigner
 {
@@ -31,7 +32,7 @@ namespace TelemetrySigner
                 NodeId = GetConfig("TELEMETRY_NODE_ID","4816d758dd37833a3a5551001dac8a5fa737a342"),
                 IngressHost = GetConfig("TELEMETRY_INGRESS_HOST","https://localhost:5010"),
                 TelegrafSocket = GetConfig("INFLUX_SOCKET","/var/run/influxdb.sock"),
-                ParityEndpoiunt = GetConfig("RPC_ENDPOINT","localhost"),
+                ParityEndpoint = GetConfig("RPC_ENDPOINT","http://localhost:8545"),
                 PersistanceDirectory = GetConfig("TELEMETRY_INTERNAL_DIR","./"),
                 IngressFingerprint = GetConfig("TELEMETRY_INGRESS_FINGERPRINT",string.Empty),
                 ParityWebSocketAddress = GetConfig("PARITY_WEB_SOCKET", string.Empty)
@@ -71,12 +72,12 @@ namespace TelemetrySigner
             //Real time telemetry subscription and sending to ingress
             RealTimeTelemetryManager ps = new RealTimeTelemetryManager(
                 _configuration.NodeId, 
-                _configuration.ParityEndpoiunt, 
+                _configuration.ParityEndpoint, 
                 _configuration.ParityWebSocketAddress, 
                 (_configuration.IngressHost+"/api/ingress/realtime"), 
                 _configuration.IngressFingerprint, _signer, true );
 
-            ps.subscribeAndPost(true);
+            ps.SubscribeAndPost(true);
 
         }
 
