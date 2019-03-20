@@ -15,6 +15,7 @@ namespace TelemetrySigner
 
         private static SignerConfiguration _configuration;
         private static PayloadSigner _signer;
+        private static Timer _flushTimer;
 
         private static string GetConfig(string name, string defaultValue)
         {
@@ -66,8 +67,8 @@ namespace TelemetrySigner
             Task.Run(() =>
             {
                 // Prepare flush timer
-                Timer flushTimer = new Timer(FlushToIngress);
-                flushTimer.Change(5000, 10000);
+                _flushTimer = new Timer(FlushToIngress);
+                _flushTimer.Change(5000, 10000);
 
                 TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
                 reader.Read(_globalQueue);
@@ -130,6 +131,15 @@ namespace TelemetrySigner
             }
             else
             {
+                if (_globalQueue.Count > 250)
+                {
+                    // increase processing speed to 2 seconds
+                    _flushTimer.Change(2000, 2000);
+                }
+                else // queue is small enough to get processed. back to normal speed
+                {
+                    _flushTimer.Change(5000, 10000);
+                }
                 _lastFlush = DateTime.UtcNow;
             }
             
