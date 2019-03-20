@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TelemetrySigner.Models;
 
@@ -62,6 +63,16 @@ namespace TelemetrySigner
             _signer.Init();
             
 
+            Task.Run(() =>
+            {
+                // Prepare flush timer
+                Timer flushTimer = new Timer(FlushToIngress);
+                flushTimer.Change(5000, 10000);
+
+                TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
+                reader.Read(_globalQueue);
+            });
+            
             //Real time telemetry subscription and sending to ingress
             RealTimeTelemetryManager ps = new RealTimeTelemetryManager(
                 _configuration.NodeId, 
@@ -71,15 +82,9 @@ namespace TelemetrySigner
                 _configuration.IngressFingerprint, _signer, true );
 
             ps.SubscribeAndPost(true);
-            
-            // Prepare flush timer
-            Timer flushTimer = new Timer(FlushToIngress);
-            flushTimer.Change(5000, 10000);
-            
-            TelegrafSocketReader reader = new TelegrafSocketReader(_configuration.TelegrafSocket);
-            reader.Read(_globalQueue);
 
-           
+            
+
 
         }
 
