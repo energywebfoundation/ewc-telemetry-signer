@@ -104,6 +104,7 @@ namespace TelemetrySigner
                 telemetryToSend.Add(lineFromQueue);
             }
             
+           
             Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue.");
 
             TelemetryPacket pkt = new TelemetryPacket
@@ -128,6 +129,8 @@ namespace TelemetrySigner
                     Console.WriteLine("ERROR: Unable to send to ingress for more then 5 minutes. Sending queue on second channel.");
                     
                 }
+                _lastFlush = DateTime.UtcNow;
+
             }
             else
             {
@@ -138,7 +141,7 @@ namespace TelemetrySigner
                 }
                 else // queue is small enough to get processed. back to normal speed
                 {
-                    _flushTimer.Change(5000, 10000);
+                    _flushTimer.Change(10000, 10000);
                 }
                 _lastFlush = DateTime.UtcNow;
             }
