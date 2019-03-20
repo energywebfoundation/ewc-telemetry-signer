@@ -42,7 +42,7 @@ namespace tests
             {
                 mgr.SubscribeAndPost(false);
                 string ret = cop.GetOuput();
-                Assert.True(ret.Contains("Connection refused"));
+                Assert.Contains("Unable to connect to the remote server", ret);
             }
         }
 
@@ -89,7 +89,7 @@ namespace tests
                 methodInfo.Invoke(mgr, parameters);
 
                 string ret = cop.GetOuput();
-                Assert.True(ret.Contains("Connection refused"));
+                Assert.Contains("Connection refused", ret);
                 //Assert.True(ret.Contains("ERROR Occurred While sending data to Ingress"));
             }
         }
