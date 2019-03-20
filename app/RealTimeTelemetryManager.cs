@@ -128,8 +128,6 @@ namespace TelemetrySigner
         {
             try
             {
-                Console.WriteLine(_encoder.GetString(buffer));
-
                 string numPeers = GetCurrentNumPeers();
                 string clientVersion = GetCurrentClientVersion();
 
@@ -166,8 +164,6 @@ namespace TelemetrySigner
 
                     if (_verbose)
                     {
-                        Console.WriteLine(_encoder.GetString(buffer));
-
                         Console.WriteLine("New Block received");
                         Console.WriteLine("block num: {0}", rttp.BlockNum);
                         Console.WriteLine("block hash: {0}", rttp.BlockHash);
