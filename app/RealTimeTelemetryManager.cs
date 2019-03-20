@@ -55,7 +55,8 @@ namespace TelemetrySigner
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Exception occurred in WebSocket Connection: {0}", ex);
+                    Console.WriteLine("Exception occurred in WebSocket Connection: {0} => {1}", ex.Message, ex.InnerException?.Message ?? "");
+                    Console.WriteLine("Reconnecting in 20 seconds");
                     //wait 20 second and re attempt operations based on flag(websocket connection to parity, data pushing to ingress)
                     if (reAttemptConnection) { Thread.Sleep(20000); }
                 }
