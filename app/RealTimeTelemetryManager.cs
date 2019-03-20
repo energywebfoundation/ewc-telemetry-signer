@@ -66,6 +66,10 @@ namespace TelemetrySigner
         private async Task Connect(ClientWebSocket webSocket)
         {
 
+            // make sure to clean up the old one
+            webSocket.Abort();
+            webSocket.Dispose();
+            webSocket = new ClientWebSocket();
             await webSocket.ConnectAsync(new Uri(_webSocketUri), CancellationToken.None);
 
             await Task.WhenAll(Receive(webSocket), Send(webSocket));
