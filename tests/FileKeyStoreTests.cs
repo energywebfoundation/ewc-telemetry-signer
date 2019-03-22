@@ -15,6 +15,26 @@ namespace tests
             Assert.Throws<DirectoryNotFoundException>(() => { _ = new FileKeyStore("does-not-exist"); });
         } 
         
+        [Fact]
+        public void ShouldThrowOnNonExistingSaltFile()
+        {
+            string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tmpPath);
+            
+            FileKeyStore fksunderTest = new FileKeyStore(tmpPath);
+            Assert.Throws<FileNotFoundException>(() => { fksunderTest.LoadSalt(); });
+        } 
+        
+        [Fact]
+        public void ShouldThrowOnNonExistingKeyFile()
+        {
+            string tmpPath = Path.Join(Path.GetTempPath(), Guid.NewGuid().ToString());
+            Directory.CreateDirectory(tmpPath);
+            
+            FileKeyStore fksunderTest = new FileKeyStore(tmpPath);
+            Assert.Throws<FileNotFoundException>(() => { fksunderTest.LoadEncryptedKey(); });
+        }
+        
         [Theory]
         [InlineData("")]
         [InlineData("    ")]

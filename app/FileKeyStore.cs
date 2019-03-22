@@ -34,6 +34,7 @@ namespace TelemetrySigner
             _saltFilePath = Path.Combine(basePath, "signing.salt");
         }
         
+        /// <inheritdoc />
         /// <summary>
         /// Save the given bytes to the signing.salt file
         /// </summary>
@@ -43,21 +44,33 @@ namespace TelemetrySigner
             File.WriteAllBytes(_saltFilePath,salt);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Load the salt as bytes from the signing.salt file
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The salt as bytes</returns>
+        /// <exception cref="FileNotFoundException">Thrown when the salt file is not found</exception>
         public byte[] LoadSalt()
         {
+            if (!File.Exists(_saltFilePath))
+            {
+                throw new FileNotFoundException($"Salt file not found at {_saltFilePath}");
+            }
             return File.ReadAllBytes(_saltFilePath);
         }
 
+        /// <inheritdoc />
         /// <summary>
         /// Load the encrypted key from the signing.key file
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The encrypted key as bytes</returns>
+        /// <exception cref="FileNotFoundException">Thrown when the key file is not found</exception>
         public byte[] LoadEncryptedKey()
         {
+            if (!File.Exists(_pkFile))
+            {
+                throw new FileNotFoundException($"Key file not found at {_saltFilePath}");
+            }
             return File.ReadAllBytes(_pkFile);
         }
 
