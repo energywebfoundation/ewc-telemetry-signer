@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// Thrown when the salt hasn't has the expected byte length
+    /// </summary>
     [Serializable]
     public class SaltSizeException : Exception
     {
