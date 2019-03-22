@@ -9,5 +9,15 @@ namespace TelemetrySigner
         public string ParityEndpoiunt { get; set; }
         public string IngressFingerprint { get; set; }
         public string ParityWebSocketAddress { get; set; }
+        public string FTPHost {get; set;}
+        public int FTPPort {get; set;}
+        public string FTPUser { get; set;}
+        public string FTPPass {get; set;}
+        public string FTPFingerPrint {get; set;}
+        public string FTPDir {get; set;}
+
+
+
+
     }
 }

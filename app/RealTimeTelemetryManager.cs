@@ -20,14 +20,52 @@ namespace TelemetrySigner
         private PayloadSigner _signer;
         private string _nodeId;
 
+        private FTPManager _ftpMgr;
+
         UTF8Encoding encoder = new UTF8Encoding();
 
-        public RealTimeTelemetryManager(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, bool verbose)
+        public RealTimeTelemetryManager(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose)
         {
+
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                throw new ArgumentException("Node ID is empty", nameof(nodeId));
+            }
+
+            if (string.IsNullOrWhiteSpace(jsonRpcURL))
+            {
+                throw new ArgumentException("RPC URL is empty", nameof(jsonRpcURL));
+            }
+
+            if (string.IsNullOrWhiteSpace(webSocketURL))
+            {
+                throw new ArgumentException("Web Socket URL is empty", nameof(webSocketURL));
+            }
+
+            if (string.IsNullOrWhiteSpace(ingressEndPoint))
+            {
+                throw new ArgumentException("Ingress END Point is empty", nameof(ingressEndPoint));
+            }
+
+            if (string.IsNullOrWhiteSpace(ingressFingerPrint))
+            {
+                throw new ArgumentException("Ingress Finger Point is empty", nameof(ingressFingerPrint));
+            }
+
+            if (signer == null)
+            {
+                throw new ArgumentException("Signer is null", nameof(signer));
+            }
+            if (ftpMgr == null)
+            {
+                throw new ArgumentException("FTP Manager is null", nameof(signer));
+            }
+
             _webSocketURI = webSocketURL;
             _jsonRpcURL = jsonRpcURL;
             _signer = signer;
             _nodeId = nodeId;
+            _ftpMgr = ftpMgr;
 
             _webClient = new WebClient();
 
@@ -203,11 +241,27 @@ namespace TelemetrySigner
                 Thread.Sleep(new Random().Next(1, 500));
 
                 //push data to ingress real time telemetry endpoint
-                bool sendSuccess = _tti.SendRequest(JsonConvert.SerializeObject(rtt)).Result;
+                string jsonPayload = JsonConvert.SerializeObject(rtt);
+
+                bool sendSuccess = _tti.SendRequest(jsonPayload).Result;
+
                 if (!sendSuccess)
                 {
-                    // TODO: unable to send real time telemetry to ingress - send by second channel
-                    Console.WriteLine("ERROR: Unable to send to ingress for more then. Use Sending queue on second channel.");
+                    // unable to send real time telemetry to ingress - send by second channel
+                    Console.WriteLine("ERROR: Unable to send to real time telemetry ingress. Sending data on second channel.");
+
+                    string fileName = string.Format("{0}-{1}.json", _nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
+                    try
+                    {
+                        if (!_ftpMgr.transferData(jsonPayload, fileName))
+                        {
+                            Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Data File {0}", fileName);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Error Details {0}", ex.ToString());
+                    }
 
                 }
                 else

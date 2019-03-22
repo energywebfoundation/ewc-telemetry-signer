@@ -10,6 +10,7 @@ namespace tests
 {
     public class RealTimeTelemetryManagerTests
     {
+        FTPManager ftpMgr;
 
         public RealTimeTelemetryManagerTests()
         {
@@ -17,6 +18,8 @@ namespace tests
                 "4816d758dd37833a3a5551001dac8a5fa737a342", 
                 new FileKeyStore("./"));
             string pubkey = sig.GenerateKeys();
+
+            ftpMgr = new FTPManager("foo","pass","127.0.0.1",2222,"78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d","/upload/dropzone/");
         }
 
         [Fact]
@@ -34,6 +37,7 @@ namespace tests
                 "https://localhost:5010/api/ingress/realtime",
                 "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
                 signer,
+                ftpMgr,
                 true);
 
             var currentConsoleOut = Console.Out;
@@ -60,6 +64,7 @@ namespace tests
                 "https://localhost:5010/api/ingress/realtime",
                 "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
                 signer,
+                ftpMgr,
                 true);
 
             RealTimeTelemetryPayload rttp = new RealTimeTelemetryPayload
@@ -110,6 +115,7 @@ namespace tests
                 "https://localhost:5010/api/ingress/realtime",
                 "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
                 signer,
+                ftpMgr,
                 true);
 
             MethodInfo methodInfo = typeof(RealTimeTelemetryManager).GetMethod("ParseAndSignData", BindingFlags.NonPublic | BindingFlags.Instance);
