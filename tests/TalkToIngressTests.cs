@@ -29,6 +29,11 @@ namespace tests
             {
                 _ = new TalkToIngress(url+ "/api/ingress/influx",fingerPrint);
             });
+            
+            Assert.Throws<ArgumentException>(() =>
+            {
+                _ = new TalkToIngress(url,fingerPrint);
+            });
         }
         
         [Theory]

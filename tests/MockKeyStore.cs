@@ -3,6 +3,9 @@ using TelemetrySigner;
 
 namespace tests
 {
+    /// <summary>
+    /// In-Memory mock keystore
+    /// </summary>
     public class MockKeyStore : IKeyStore
     {
         public byte[] Salt { get; set; }

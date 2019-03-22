@@ -28,25 +28,25 @@ namespace TelemetrySigner
         /// <exception cref="ArgumentException">Any of the arguments given is not correct. see exception message.</exception>
         public TalkToIngress(string endPoint, string ingressFingerPrint, HttpMessageHandler testHandler = null)
         {
+            // Verify endpoint
             if (string.IsNullOrWhiteSpace(endPoint))
             {
                 throw new ArgumentException("URL is empty",nameof(endPoint));
             }
             
-            if (string.IsNullOrWhiteSpace(ingressFingerPrint))
-            {
-                throw new ArgumentException("Fingerprint is empty",nameof(ingressFingerPrint));
-            }
-    
             if (!endPoint.StartsWith("https://"))
             {
                 throw new ArgumentException("URL is not https",nameof(endPoint));
             }
+            
+            // Verify fingerprint
+            if (string.IsNullOrWhiteSpace(ingressFingerPrint))
+            {
+                throw new ArgumentException("Fingerprint is empty",nameof(ingressFingerPrint));
+            }
 
             _fingerprint = ingressFingerPrint.Replace(":",string.Empty).ToUpperInvariant();
-            //_url = ingressUrl;
             _endPoint = endPoint;
-            
 
             // Use the default handler when no specific handler is passed in.
             var handler = new HttpClientHandler {ServerCertificateCustomValidationCallback = PinPublicKey};
