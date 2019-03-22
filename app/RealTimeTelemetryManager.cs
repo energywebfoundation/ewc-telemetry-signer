@@ -286,7 +286,7 @@ namespace TelemetrySigner
                 //push data to ingress real time telemetry endpoint
                 bool sendSuccess = _tti.SendRequest(JsonConvert.SerializeObject(rtt)).Result;
                 _logger.Log(!sendSuccess
-                    ? "ERROR: Unable to send to ingress for more then. Use Sending queue on second channel."
+                    ? "ERROR: Unable to send to ingress."
                     : $"Real Time Telemetry Block data sent to Ingress Block #{rtt.Payload.BlockNum}");
             }
             catch (Exception ex)

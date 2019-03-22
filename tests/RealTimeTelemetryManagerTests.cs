@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using FluentAssertions;
 using Newtonsoft.Json;
 using TelemetrySigner;
 using TelemetrySigner.Models;
@@ -30,21 +31,22 @@ namespace tests
             PayloadSigner signer = new PayloadSigner(nodeId, GetMockKeyStore());
             signer.Init();
 
-            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(
-                nodeId,
-                "http://127.0.0.1",
-                "ws://127.0.0.1",
-                "https://localhost:5010/api/ingress/realtime",
-                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
-                signer,
-                true);
-
-            using (var cop = new ConsoleOutputCapturer())
+            var cfg = new SignerConfiguration
             {
-                mgr.SubscribeAndPost(false);
-                string ret = cop.GetOuput();
-                Assert.Contains("Unable to connect to the remote server", ret);
-            }
+                NodeId = nodeId,
+                ParityEndpoint = "http://127.0.0.1",
+                IngressHost = "https://localhost:5010/api/ingress/realtime",
+                IngressFingerprint ="ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                ParityWebSocketAddress = "ws://127.0.0.1",
+                TelegrafSocket = "",
+                PersistanceDirectory = ""
+            };
+
+            var logger = new MockLogger();
+            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(cfg,signer,logger ,true);
+
+            mgr.SubscribeAndPost(false);
+            logger.LoggedMessages.Should().Contain("Exception occurred in WebSocket Connection: One or more errors occurred. (Unable to connect to the remote server) => Unable to connect to the remote server");
         }
 
         [Fact]
@@ -55,14 +57,19 @@ namespace tests
             PayloadSigner signer = new PayloadSigner(nodeId, GetMockKeyStore());
             signer.Init();
 
-            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(
-                nodeId,
-                "http://127.0.0.1",
-                "ws://127.0.0.1",
-                "https://localhost:5010/api/ingress/realtime",
-                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
-                signer,
-                true);
+            var cfg = new SignerConfiguration
+            {
+                NodeId = nodeId,
+                ParityEndpoint = "http://127.0.0.1",
+                IngressHost = "https://localhost:5010/api/ingress/realtime",
+                IngressFingerprint ="ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                ParityWebSocketAddress = "ws://127.0.0.1",
+                TelegrafSocket = "",
+                PersistanceDirectory = ""
+            };
+            
+            var logger = new MockLogger();
+            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(cfg,signer,logger,true);
 
             RealTimeTelemetryPayload rttp = new RealTimeTelemetryPayload
             {
@@ -83,17 +90,13 @@ namespace tests
                 Payload = rttp,
                 Signature = signer.SignPayload(JsonConvert.SerializeObject(rttp))
             };
+            
+            // invoke private method
+            MethodInfo methodInfo = typeof(RealTimeTelemetryManager).GetMethod("SendDataToIngress", BindingFlags.NonPublic | BindingFlags.Instance);
+            object[] parameters = { rtt };
+            methodInfo.Invoke(mgr, parameters);
 
-            using (var cop = new ConsoleOutputCapturer())
-            {
-                MethodInfo methodInfo = typeof(RealTimeTelemetryManager).GetMethod("SendDataToIngress", BindingFlags.NonPublic | BindingFlags.Instance);
-                object[] parameters = { rtt };
-                methodInfo.Invoke(mgr, parameters);
-
-                string ret = cop.GetOuput();
-                Assert.Contains("Connection refused", ret);
-                //Assert.True(ret.Contains("ERROR Occurred While sending data to Ingress"));
-            }
+            logger.LoggedMessages.Should().Contain("ERROR: Unable to send to ingress.");
         }
 
         [Theory]
@@ -106,44 +109,24 @@ namespace tests
             PayloadSigner signer = new PayloadSigner(nodeId, GetMockKeyStore());
             signer.Init();
 
-            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(
-                nodeId,
-                "http://127.0.0.1",
-                "ws://127.0.0.1",
-                "https://localhost:5010/api/ingress/realtime",
-                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
-                signer,
-                true);
+            var cfg = new SignerConfiguration
+            {
+                NodeId = nodeId,
+                ParityEndpoint = "http://127.0.0.1",
+                IngressHost = "https://localhost:5010/api/ingress/realtime",
+                IngressFingerprint ="ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                ParityWebSocketAddress = "ws://127.0.0.1",
+                TelegrafSocket = "",
+                PersistanceDirectory = ""
+            };
+            
+            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(cfg,signer,new MockLogger(),true);
 
             MethodInfo methodInfo = typeof(RealTimeTelemetryManager).GetMethod("ParseAndSignData", BindingFlags.NonPublic | BindingFlags.Instance);
-            object[] parameters = { Encoding.ASCII.GetBytes(data) };
+            object[] parameters = { Encoding.ASCII.GetBytes(data), "2","parity // Ethereum" };
             object ret = methodInfo.Invoke(mgr, parameters);
             Assert.Null(ret);
         }
 
-    }
-
-    public class ConsoleOutputCapturer : IDisposable
-    {
-        private StringWriter stringWriter;
-        private TextWriter originalOutput;
-
-        public ConsoleOutputCapturer()
-        {
-            stringWriter = new StringWriter();
-            originalOutput = Console.Out;
-            Console.SetOut(stringWriter);
-        }
-
-        public string GetOuput()
-        {
-            return stringWriter.ToString();
-        }
-
-        public void Dispose()
-        {
-            Console.SetOut(originalOutput);
-            stringWriter.Dispose();
-        }
     }
 }
