@@ -6,6 +6,9 @@ using Newtonsoft.Json;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// Class with entry point of project
+    /// </summary>
     internal static class Program
     {
         private static ConcurrentQueue<string> _globalQueue;
@@ -15,12 +18,23 @@ namespace TelemetrySigner
 
         private static FTPManager _ftpMgr;
 
+
+        /// <summary>
+        /// Function for getting Environment Variables
+        /// </summary>
+        /// <param name="name">Name of Environment Variable</param>
+        /// <param name="defaultValue">Default value of Environment Variable</param>
+        /// <returns>returns Environment Variable value</returns>
         private static string GetConfig(string name, string defaultValue)
         {
             string value = Environment.GetEnvironmentVariable(name);
             return string.IsNullOrWhiteSpace(value) ? defaultValue : value;
         }
 
+        /// <summary>
+        /// Program entry point
+        /// </summary>
+        /// <param name="args">Command Line arguments</param>
         private static void Main(string[] args)
         {
 
@@ -92,6 +106,11 @@ namespace TelemetrySigner
 
         }
 
+
+        /// <summary>
+        /// Sends data to Ingress restful end point
+        /// </summary>
+        /// <param name="state">Object state</param>
         private static void FlushToIngress(object state)
         {
             // Flush to ingress if more than 10 telemetry recordings -or- last flush older that 1 minute

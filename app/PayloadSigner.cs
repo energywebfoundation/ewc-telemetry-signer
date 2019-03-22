@@ -5,6 +5,9 @@ using System.Text;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// PayloadSigner class for signing payload and keys creation
+    /// </summary>
     public class PayloadSigner
     {
         private RSACryptoServiceProvider _rsa;
@@ -12,39 +15,55 @@ namespace TelemetrySigner
         private readonly string _nodeId;
         private const int KeySize = 4096;
 
+        /// <summary>
+        /// PayloadSigner constructor for PayloadSigner instance creation
+        /// </summary>
+        /// <param name="nodeId">Id of Node</param>
+        /// <param name="keyStore">keyStore reference</param>
+        /// <returns>returns instance of PayloadSigner</returns>
+        /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
         public PayloadSigner(string nodeId, IKeyStore keyStore)
         {
 
             if (string.IsNullOrWhiteSpace(nodeId))
             {
-                throw new ArgumentException("Provide nodeId",nameof(nodeId));
+                throw new ArgumentException("Provide nodeId", nameof(nodeId));
             }
 
             _nodeId = nodeId;
-            _keystore = keyStore ?? throw new ArgumentException("Keystore not allowed to be null",nameof(keyStore));
+            _keystore = keyStore ?? throw new ArgumentException("Keystore not allowed to be null", nameof(keyStore));
         }
 
+        /// <summary>
+        /// Signs provided string payload and returns signature
+        /// </summary>
+        /// <param name="payload">Payload string to be signed</param>
+        /// <returns>returns the signature</returns>
         public string SignPayload(string payload)
         {
             // Convert payload to bytes
             ASCIIEncoding byteConverter = new ASCIIEncoding();
             byte[] payloadBytes = byteConverter.GetBytes(payload);
-            
+
             // Sign payload bytes
             byte[] signatureBytes = _rsa.SignData(payloadBytes, new SHA256CryptoServiceProvider());
-            
+
             // Convert to bas64 and return
             string base64Signature = Convert.ToBase64String(signatureBytes);
             return base64Signature;
         }
-        
+
+        /// <summary>
+        /// Init RSA Crypto Services Provider
+        /// </summary>
+        /// <exception cref="TelemetrySigner.KeypairNotFoundException">Thrown when key pair is missing.</exception>
         public void Init()
         {
-            
+
             // Load private key
             _rsa = new RSACryptoServiceProvider(KeySize);
-                
-            try 
+
+            try
             {
                 // Load and decrypt the key from store
                 byte[] decryptedPrivateKey = LoadKeyFromStore();
@@ -52,12 +71,16 @@ namespace TelemetrySigner
                 // Load decrypted CSP blob into RSA
                 _rsa.ImportCspBlob(decryptedPrivateKey);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                throw new KeypairNotFoundException("Key files not present or invalid. Generate first using --genkey",e);
+                throw new KeypairNotFoundException("Key files not present or invalid. Generate first using --genkey", e);
             }
         }
 
+        /// <summary>
+        ///  Generate Keys for first time use
+        /// </summary>
+        /// <returns>returns base64 encoded public key string</returns>
         public string GenerateKeys()
         {
 
@@ -66,16 +89,20 @@ namespace TelemetrySigner
                 // Generate new keypair when not all key files found on disk
                 byte[] publicKey = rsa.ExportCspBlob(false);
                 string publicKeyBase64 = Convert.ToBase64String(publicKey);
-        
+
                 // Save new private key to disk so it can be reloaded after service restart
                 byte[] privateKey = rsa.ExportCspBlob(true);
                 StoreKey(privateKey);
-                return publicKeyBase64;    
+                return publicKeyBase64;
             }
-            
-            
+
+
         }
 
+        /// <summary>
+        /// Encrypts key using and then stores key into file
+        /// </summary>
+        /// <param name="privateKey">Private Key byte array to be saved</param>
         private void StoreKey(byte[] privateKey)
         {
             // encrypt private key to be stored on disk using RFC2898 derived keys and AES256 encryption
@@ -123,6 +150,12 @@ namespace TelemetrySigner
             _keystore.SaveEncryptedKey(encryptedPrivateKey);
         }
 
+
+        /// <summary>
+        /// Loads Key from store and returns its byte array
+        /// </summary>
+        /// <returns>returns decrypted byte array of private key</returns>
+        /// <exception cref="TelemetrySigner.SaltSizeException">Thrown when salt size is invalid.</exception>
         private byte[] LoadKeyFromStore()
         {
             // Read encrypted private key from disk

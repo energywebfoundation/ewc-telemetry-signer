@@ -11,6 +11,9 @@ using System.Net;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// RealTimeTelemetryManager class contains functionality for subscription of real time blocks data from a parity using web sockets, signing and sending that data to Influx and incase of failure sending data to provided SFTP 
+    /// </summary>
     public class RealTimeTelemetryManager
     {
         private WebClient _webClient;
@@ -22,9 +25,24 @@ namespace TelemetrySigner
 
         private FTPManager _ftpMgr;
 
+        private bool _verbose;
+
         UTF8Encoding encoder = new UTF8Encoding();
 
-        public RealTimeTelemetryManager(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose)
+        /// <summary>
+        /// RealTimeTelemetryManager constructor for RealTimeTelemetryManager instance creation
+        /// </summary>
+        /// <param name="nodeId">Node Id </param>
+        /// <param name="jsonRpcURL">JSON Rpc of Parity </param>
+        /// <param name="webSocketURL">Web Socket URL of Parity </param>
+        /// <param name="ingressEndPoint">Ingress REal time restful End Point </param>
+        /// <param name="ingressFingerPrint">Ingress Finger Print </param>
+        /// <param name="signer">Payload Signer instance reference </param>
+        /// <param name="ftpMgr">FTPManager instance reference </param>
+        /// <param name="verbose">if detailed logs are required set verbose to true </param>
+        /// <returns>returns instance of RealTimeTelemetryManager</returns>
+        /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
+        public RealTimeTelemetryManager(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose = true)
         {
 
             if (string.IsNullOrWhiteSpace(nodeId))
@@ -67,12 +85,17 @@ namespace TelemetrySigner
             _nodeId = nodeId;
             _ftpMgr = ftpMgr;
 
+            _verbose = verbose;
+
             _webClient = new WebClient();
 
             _tti = new TalkToIngress(ingressEndPoint, ingressFingerPrint);
         }
-        private const bool verbose = true;
 
+        /// <summary>
+        /// Subscribes to Parity for real time blocks using websocket and posts that to Influx restful end point
+        /// </summary>
+        /// <param name="reAttemptConnection">Flag for re attempting connection control</param>
         public void subscribeAndPost(bool reAttemptConnection)
         {
             ClientWebSocket webSocket = null;
@@ -100,9 +123,10 @@ namespace TelemetrySigner
             } while (reAttemptConnection) ;
         }
 
-
-
-
+        /// <summary>
+        /// Connects to provided websocker and waits for response
+        /// </summary>
+        /// <param name="webSocket">ClientWebSocket instance reference</param>
         private async Task Connect(ClientWebSocket webSocket)
         {
 
@@ -111,7 +135,10 @@ namespace TelemetrySigner
             await Task.WhenAll(Receive(webSocket), Send(webSocket));
         }
 
-
+        /// <summary>
+        /// Send method for web socket connection
+        /// </summary>
+        /// <param name="webSocket">ClientWebSocket instance reference</param>
         private async Task Send(ClientWebSocket webSocket)
         {
             byte[] buffer = encoder.GetBytes("{\"method\":\"parity_subscribe\",\"params\":[\"eth_getBlockByNumber\",[\"latest\",true]],\"id\":1,\"jsonrpc\":\"2.0\"}");
@@ -124,6 +151,10 @@ namespace TelemetrySigner
             }
         }
 
+        /// <summary>
+        /// Receive method for web socket connection, It receivesreal time block data from parity and sends that to Ingress restful end point
+        /// </summary>
+        /// <param name="webSocket">ClientWebSocket instance reference</param>
         private async Task Receive(ClientWebSocket webSocket)
         {
             int BufferSize = 4096;
@@ -161,6 +192,11 @@ namespace TelemetrySigner
             }
         }
 
+        /// <summary>
+        /// Function for parsing and signing block data 
+        /// </summary>
+        /// <param name="buffer">block data in byte array</param>
+        /// <returns>returns instance of RealTimeTelemetry if valid data is provided else null</returns>
         private RealTimeTelemetry ParseAndSignData(byte[] buffer)
         {
             try
@@ -203,7 +239,7 @@ namespace TelemetrySigner
                         Signature = _signer.SignPayload(JsonConvert.SerializeObject(rttp))
                     };
 
-                    if (verbose)
+                    if (_verbose)
                     {
                         Console.WriteLine(encoder.GetString(buffer));
                         Console.WriteLine(numOfPeersResponse);
@@ -232,6 +268,11 @@ namespace TelemetrySigner
             return null;
 
         }
+
+        /// <summary>
+        /// Function for sending data to ingress restful end point
+        /// </summary>
+        /// <param name="rtt">Reference of RealTimeTelemetry instance</param>
         private void SendDataToIngress(RealTimeTelemetry rtt)
         {
 

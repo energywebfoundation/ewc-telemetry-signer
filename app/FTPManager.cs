@@ -9,6 +9,9 @@ using Renci.SshNet;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// FTPManager class contains functionality for uploading files to SFTP Host
+    /// </summary>
     public class FTPManager
     {
         private string _userName;
@@ -18,6 +21,17 @@ namespace TelemetrySigner
         private string _fingerPrint;
         private string _workingDir;
 
+        /// <summary>
+        /// FTPManager constructor for FTPManager instance creation
+        /// </summary>
+        /// <param name="userName">SFTP User name</param>
+        /// <param name="password">SFTP password</param>
+        /// <param name="sftpHost">SFTP Host </param>
+        /// <param name="port">SFTP port</param>
+        /// <param name="fingerPrint">SFTP fingerPrint</param>
+        /// <param name="workingDir">SFTP workingDir where file will be uploaded</param>
+        /// <returns>returns instance of FTPManager</returns>
+        /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
         public FTPManager(string userName, string password, string sftpHost, int port, string fingerPrint, string workingDir)
         {
             if (string.IsNullOrWhiteSpace(userName))
@@ -44,7 +58,7 @@ namespace TelemetrySigner
             {
                 throw new ArgumentException("SFTP workingDir is empty", nameof(workingDir));
             }
-            
+
             _userName = userName;
             _password = password;
             _sftpHost = sftpHost;
@@ -53,6 +67,12 @@ namespace TelemetrySigner
             _workingDir = workingDir;
         }
 
+        /// <summary>
+        /// Uploads the file to SFTP Server
+        /// </summary>
+        /// <param name="data">File data to be uploaded</param>
+        /// <param name="fileName">File name to be used</param>
+        /// <returns>returns true if operation is successful else false</returns>
         public bool transferData(string data, string fileName)
         {
             Console.WriteLine("Creating client and connecting");
@@ -60,6 +80,7 @@ namespace TelemetrySigner
             {
                 using (var client = new SftpClient(_sftpHost, _port, _userName, _password))
                 {
+                    //remote host finger print validation
                     client.HostKeyReceived += (sender, e) =>
                     {
                         StringBuilder stringBuilder = new StringBuilder();
@@ -76,11 +97,13 @@ namespace TelemetrySigner
 
                     client.ChangeDirectory(_workingDir);
 
+                    //data conversion to memory stream for writing to sftp
                     byte[] byteData = Encoding.ASCII.GetBytes(data);
                     var stream = new MemoryStream();
                     stream.Write(byteData, 0, byteData.Length);
                     stream.Position = 0;
 
+                    //uploading file
                     client.UploadFile(stream, fileName, null);
 
                     client.Disconnect();
