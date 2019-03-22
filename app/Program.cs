@@ -76,12 +76,7 @@ namespace TelemetrySigner
             
             //Real time telemetry subscription and sending to ingress
             RealTimeTelemetryManager ps = new RealTimeTelemetryManager(
-                _configuration.NodeId, 
-                _configuration.ParityEndpoint, 
-                _configuration.ParityWebSocketAddress,
-                $"{_configuration.IngressHost}/api/ingress/realtime", 
-                _configuration.IngressFingerprint, _signer, true );
-
+                _configuration, _signer, new ConsoleLogger(), true );
             ps.SubscribeAndPost(true);
 
             

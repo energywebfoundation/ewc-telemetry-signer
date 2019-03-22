@@ -12,6 +12,26 @@ using TelemetrySigner.Models;
 
 namespace TelemetrySigner
 {
+
+    /// <summary>
+    /// Simple logger implementation that just sends the output to the console
+    /// </summary>
+    public class ConsoleLogger : ILogger
+    {
+        public void Log(string msg)
+        {
+            Console.WriteLine(msg);
+        }
+    }
+    
+    /// <summary>
+    /// Interface that describes a simple logger
+    /// </summary>
+    public interface ILogger
+    {
+        void Log(string msg);
+    }
+    
     /// <summary>
     /// Used to collect realtime block information from parity
     /// </summary>
@@ -25,18 +45,20 @@ namespace TelemetrySigner
         private readonly string _nodeId;
         private readonly bool _verbose;
         private readonly UTF8Encoding _encoder = new UTF8Encoding();
+        private readonly ILogger _logger;
 
-        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl, string webSocketUrl, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, bool verbose  = false)
+        public RealTimeTelemetryManager(SignerConfiguration config, PayloadSigner signer, ILogger logger, bool verbose  = false)
         {
-            _webSocketUri = webSocketUrl;
-            _jsonRpcUrl = jsonRpcUrl;
+            _webSocketUri = config.ParityWebSocketAddress;
+            _jsonRpcUrl = config.ParityEndpoint;
             _signer = signer;
-            _nodeId = nodeId;
+            _nodeId = config.NodeId;
             _verbose = verbose;
+            _logger = logger;
 
             _webClient = new WebClient();
 
-            _tti = new TalkToIngress(ingressEndPoint, ingressFingerPrint);
+            _tti = new TalkToIngress($"{config.IngressHost}/api/ingress/realtime", config.IngressFingerprint);
         }
 
         /// <summary>
@@ -54,17 +76,17 @@ namespace TelemetrySigner
                     {
                         continue;
                     }
-                    Console.WriteLine("Connecting to websocket for Realtime Telemetry");
+                    _logger.Log("Connecting to websocket for Realtime Telemetry");
                     Connect(webSocket).Wait();
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Exception occurred in WebSocket Connection: {0} => {1}", ex.Message, ex.InnerException?.Message ?? "");
+                    _logger.Log($"Exception occurred in WebSocket Connection: {ex.Message} => {ex.InnerException?.Message ?? ""}");
 
                     //wait 20 second and re attempt operations based on flag(websocket connection to parity, data pushing to ingress)
                     if (reAttemptConnection)
                     {
-                        Console.WriteLine("Reconnecting in 20 seconds");
+                        _logger.Log("Reconnecting in 20 seconds");
                         Thread.Sleep(20000);
                     }
                 }
@@ -130,7 +152,12 @@ namespace TelemetrySigner
 
                 if (response.EndOfMessage)
                 {
-                    RealTimeTelemetry rtt = ParseAndSignData(buffer);
+                    // fetch more information 
+                    // Get extra information from parity
+                    string numPeers = GetCurrentNumPeers();
+                    string clientVersion = GetCurrentClientVersion();
+                    
+                    RealTimeTelemetry rtt = ParseAndSignData(buffer,numPeers,clientVersion);
                     if (rtt != null)
                     {
                         SendDataToIngress(rtt);
@@ -152,18 +179,16 @@ namespace TelemetrySigner
         /// Parse websocket message and return real time telemetry payload
         /// </summary>
         /// <param name="buffer">Received buffer from websocket</param>
+        /// <param name="numPeers">Number of connected peers</param>
+        /// <param name="clientVersion">Parity client version</param>
         /// <returns>telemetry payload</returns>
-        private RealTimeTelemetry ParseAndSignData(byte[] buffer)
+        private RealTimeTelemetry ParseAndSignData(byte[] buffer, string numPeers, string clientVersion)
         {
             try
             {
                 // capture current unix timestamp as block received time
                 long blockReceivedTimestamp = (int)(DateTime.UtcNow - new DateTime(1970, 1, 1)).TotalSeconds;
                 
-                // Get extra information from parity
-                string numPeers = GetCurrentNumPeers();
-                string clientVersion = GetCurrentClientVersion();
-
                 dynamic jsonObj = JsonConvert.DeserializeObject(_encoder.GetString(buffer).Trim());
                 dynamic paramsObj = jsonObj["params"];
                 if (paramsObj != null && paramsObj["result"] != null)
@@ -196,24 +221,24 @@ namespace TelemetrySigner
 
                     if (_verbose)
                     {
-                        Console.WriteLine("New Block received");
-                        Console.WriteLine("block num: {0}", rttp.BlockNum);
-                        Console.WriteLine("block hash: {0}", rttp.BlockHash);
-                        Console.WriteLine("block time stamp: {0}", rttp.BlockTS);
-                        Console.WriteLine("Tx Count: {0}", rttp.NumTxInBlock);
-                        Console.WriteLine("Gas Limit: {0}", Convert.ToInt64(gasLimit, 16));
-                        Console.WriteLine("Gas Used: {0}", Convert.ToInt64(gasUsed, 16));
-                        Console.WriteLine("Peers: {0} ", rttp.NumPeers);
+                        _logger.Log("New Block received");
+                        _logger.Log($"block num: {rttp.BlockNum}");
+                        _logger.Log($"block hash: {rttp.BlockHash}");
+                        _logger.Log($"block time stamp: {rttp.BlockTS}");
+                        _logger.Log($"Tx Count: {rttp.NumTxInBlock}");
+                        _logger.Log($"Gas Limit: {Convert.ToInt64(gasLimit, 16)}");
+                        _logger.Log($"Gas Used: {Convert.ToInt64(gasUsed, 16)}");
+                        _logger.Log($"Peers: {rttp.NumPeers}");
                     }
 
                     return rtt;
                 }
 
-                Console.WriteLine("Unable to Parse\\Sign real Time data. Invalid Data");
+                _logger.Log("Unable to Parse\\Sign real Time data. Invalid Data");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Unable to Parse\\Sign real Time data. Error Occurred {0}", ex);
+                _logger.Log($"Unable to Parse\\Sign real Time data. Error Occurred {ex.Message}");
             }
             return null;
 
@@ -260,20 +285,13 @@ namespace TelemetrySigner
 
                 //push data to ingress real time telemetry endpoint
                 bool sendSuccess = _tti.SendRequest(JsonConvert.SerializeObject(rtt)).Result;
-                if (!sendSuccess)
-                {
-                    // TODO: unable to send real time telemetry to ingress - send by second channel
-                    Console.WriteLine("ERROR: Unable to send to ingress for more then. Use Sending queue on second channel.");
-
-                }
-                else
-                {
-                    Console.WriteLine("Real Time Telemetry Block data sent to Ingress Block # {0}", rtt.Payload.BlockNum);
-                }
+                _logger.Log(!sendSuccess
+                    ? "ERROR: Unable to send to ingress for more then. Use Sending queue on second channel."
+                    : $"Real Time Telemetry Block data sent to Ingress Block #{rtt.Payload.BlockNum}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ERROR Occurred While sending data to Ingress => {ex.Message}");
+                _logger.Log($"ERROR Occurred While sending data to Ingress => {ex.Message}");
             }
         }
     }
