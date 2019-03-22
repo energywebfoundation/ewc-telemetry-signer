@@ -3,6 +3,7 @@ using System.IO;
 
 namespace TelemetrySigner
 {
+    /// <inheritdoc />
     /// <summary>
     /// Implements a file based keystore to store the encrypted signing key and salt
     /// </summary>

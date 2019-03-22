@@ -5,6 +5,9 @@ using System.Text;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// Create signatures for given payloads with the singers RSA key
+    /// </summary>
     public class PayloadSigner
     {
         private RSACryptoServiceProvider _rsa;
@@ -12,6 +15,12 @@ namespace TelemetrySigner
         private readonly string _nodeId;
         private const int KeySize = 4096;
 
+        /// <summary>
+        /// Instantiate a new signer
+        /// </summary>
+        /// <param name="nodeId">Validator address or other unique node identifier</param>
+        /// <param name="keyStore">keystore implementation to load the persistent keys from</param>
+        /// <exception cref="ArgumentException">Thrown when the parameters are null or empty</exception>
         public PayloadSigner(string nodeId, IKeyStore keyStore)
         {
 
@@ -24,6 +33,11 @@ namespace TelemetrySigner
             _keystore = keyStore ?? throw new ArgumentException("Keystore not allowed to be null",nameof(keyStore));
         }
 
+        /// <summary>
+        /// Create signature for the given payload
+        /// </summary>
+        /// <param name="payload">Payload to sign</param>
+        /// <returns>Signature as base64 string</returns>
         public string SignPayload(string payload)
         {
             // Convert payload to bytes
@@ -38,6 +52,10 @@ namespace TelemetrySigner
             return base64Signature;
         }
         
+        /// <summary>
+        /// Load keys from keystore and initialize the RSA provider
+        /// </summary>
+        /// <exception cref="KeypairNotFoundException">Thrown when unable to load the keys from the keystore into the RSA provider</exception>
         public void Init()
         {
             
@@ -58,6 +76,10 @@ namespace TelemetrySigner
             }
         }
 
+        /// <summary>
+        /// Generate a new random set of signing keys and store them
+        /// </summary>
+        /// <returns>The public key portion of the new RSA key as base64 encoded string</returns>
         public string GenerateKeys()
         {
 
@@ -76,6 +98,10 @@ namespace TelemetrySigner
             
         }
 
+        /// <summary>
+        /// Encrypt the RSA private key and persist it in the keystore
+        /// </summary>
+        /// <param name="privateKey">bytes of the private key</param>
         private void StoreKey(byte[] privateKey)
         {
             // encrypt private key to be stored on disk using RFC2898 derived keys and AES256 encryption
@@ -123,6 +149,11 @@ namespace TelemetrySigner
             _keystore.SaveEncryptedKey(encryptedPrivateKey);
         }
 
+        /// <summary>
+        /// Load the encrypted key from keystore and decrypt it
+        /// </summary>
+        /// <returns>RSA private key as bytes</returns>
+        /// <exception cref="SaltSizeException">Size of salt presented by keystore is not expected length</exception>
         private byte[] LoadKeyFromStore()
         {
             // Read encrypted private key from disk
@@ -137,7 +168,7 @@ namespace TelemetrySigner
                 throw new SaltSizeException("Salt from store is not 64bits");
             }
 
-            // derive keys from nodeid and salt
+            // derive keys from node id and salt
             Rfc2898DeriveBytes rfc2898 = new Rfc2898DeriveBytes(_nodeId, salt, 1024);
             byte[] aesKey = rfc2898.GetBytes(32);
             byte[] aesIv = rfc2898.GetBytes(16);

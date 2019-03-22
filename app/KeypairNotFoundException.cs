@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// Exception that is thrown when there is an issue with the load of the RSA key
+    /// </summary>
     [Serializable]
     public class KeypairNotFoundException : Exception
     {
