@@ -17,7 +17,13 @@ namespace tests
                 ParityEndpoiunt = "localhost",
                 PersistanceDirectory = "./",
                 IngressFingerprint = "A:B:C:D:E:F:Z",
-                ParityWebSocketAddress = "ws:\\127.0.0.1"
+                ParityWebSocketAddress = "ws:\\127.0.0.1",
+                FTPHost = "127.0.0.1",
+                FTPPort = 22,
+                FTPUser = "uname",
+                FTPPass = "pass",
+                FTPFingerPrint = "A:B:C:D:E:Z",
+                FTPDir = "/",
             };
 
             Assert.NotNull(_configuration);

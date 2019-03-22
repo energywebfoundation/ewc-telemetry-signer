@@ -15,11 +15,11 @@ namespace tests
         public RealTimeTelemetryManagerTests()
         {
             PayloadSigner sig = new PayloadSigner(
-                "4816d758dd37833a3a5551001dac8a5fa737a342", 
+                "4816d758dd37833a3a5551001dac8a5fa737a342",
                 new FileKeyStore("./"));
             string pubkey = sig.GenerateKeys();
 
-            ftpMgr = new FTPManager("foo","pass","127.0.0.1",2222,"78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d","/upload/dropzone/");
+            ftpMgr = new FTPManager("foo", "pass", "127.0.0.1", 2222, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
         }
 
         [Fact]
@@ -122,6 +122,100 @@ namespace tests
             object[] parameters = { Encoding.ASCII.GetBytes(data) };
             object ret = methodInfo.Invoke(mgr, parameters);
             Assert.Null(ret);
+        }
+
+        [Theory]
+        [InlineData("",
+                    "http://127.0.0.1",
+                    "ws://127.0.0.1",
+                    "https://localhost:5010/api/ingress/realtime",
+                    "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E")]
+        [InlineData("4816d758dd37833a3a5551001dac8a5fa737a342",
+                    "",
+                    "ws://127.0.0.1",
+                    "https://localhost:5010/api/ingress/realtime",
+                    "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E")]
+        [InlineData("4816d758dd37833a3a5551001dac8a5fa737a342",
+                    "http://127.0.0.1",
+                    "",
+                    "https://localhost:5010/api/ingress/realtime",
+                    "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E")]
+        [InlineData("4816d758dd37833a3a5551001dac8a5fa737a342",
+                    "http://127.0.0.1",
+                    "ws://127.0.0.1",
+                    "",
+                    "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E")]
+        [InlineData("4816d758dd37833a3a5551001dac8a5fa737a342",
+                    "http://127.0.0.1",
+                    "ws://127.0.0.1",
+                    "https://localhost:5010/api/ingress/realtime",
+                    "")]
+       
+        void InvalidArgumentShouldFail(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint,
+            string ingressFingerPrint)
+        {
+            RealTimeTelemetryManager mgr = null;
+
+            PayloadSigner signer = new PayloadSigner("4816d758dd37833a3a5551001dac8a5fa737a342", new FileKeyStore("./"));
+            signer.Init();
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                mgr = new RealTimeTelemetryManager(
+                               nodeId, jsonRpcURL, webSocketURL, ingressEndPoint, ingressFingerPrint,
+                               signer,
+                               ftpMgr,
+                               true);
+            });
+            Assert.Null(mgr);
+
+        }
+
+        [Fact]
+        void InvalidSignerShouldFailInstanceCreation()
+        {
+            string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
+            RealTimeTelemetryManager mgr = null;
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                mgr = new RealTimeTelemetryManager(
+                nodeId,
+                "http://127.0.0.1",
+                "ws://127.0.0.1",
+                "https://localhost:5010/api/ingress/realtime",
+                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                null,
+                ftpMgr,
+                true);
+            });
+            Assert.Null(mgr);
+
+        }
+
+        [Fact]
+        void InvalidFTPManagerShouldFailInstanceCreation()
+        {
+            string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
+            RealTimeTelemetryManager mgr = null;
+
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
+
+            Assert.Throws<ArgumentException>(() =>
+            {
+                mgr = new RealTimeTelemetryManager(
+                nodeId,
+                "http://127.0.0.1",
+                "ws://127.0.0.1",
+                "https://localhost:5010/api/ingress/realtime",
+                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                signer,
+                null,
+                true);
+            });
+            Assert.Null(mgr);
+
         }
 
     }
