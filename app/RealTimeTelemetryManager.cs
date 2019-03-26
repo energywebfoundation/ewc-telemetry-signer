@@ -291,7 +291,7 @@ namespace TelemetrySigner
                     // unable to send real time telemetry to ingress - send by second channel
                     Console.WriteLine("ERROR: Unable to send to real time telemetry ingress. Sending data on second channel.");
 
-                    string fileName = string.Format("{0}-{1}.json", _nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
+                    string fileName = string.Format("{0}-{1}.json", _nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss"));
                     try
                     {
                         if (!_ftpMgr.transferData(jsonPayload, fileName))
