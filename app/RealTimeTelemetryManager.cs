@@ -3,15 +3,15 @@ using System.Threading;
 using System.Net.WebSockets;
 using System.Threading.Tasks;
 using System.Text;
-using System.Collections.ObjectModel;
-using System.Collections.Generic;
-using System.IO;
 using Newtonsoft.Json;
 using System.Net;
 using TelemetrySigner.Models;
 
 namespace TelemetrySigner
 {
+    /// <summary>
+    /// RealTimeTelemetryManager class contains functionality for subscription of real time blocks data from a parity using web sockets, signing and sending that data to Influx and incase of failure sending data to provided SFTP 
+    /// </summary>
     public class RealTimeTelemetryManager
     {
         private readonly WebClient _webClient;
@@ -22,12 +22,55 @@ namespace TelemetrySigner
         private readonly string _nodeId;
         private readonly bool _verbose;
         private readonly UTF8Encoding _encoder = new UTF8Encoding();
+        private readonly FTPManager _ftpMgr;
 
-        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl, string webSocketUrl, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, bool verbose  = false)
+        /// <summary>
+        /// RealTimeTelemetryManager constructor for RealTimeTelemetryManager instance creation
+        /// </summary>
+        /// <param name="nodeId">Node Id </param>
+        /// <param name="jsonRpcUrl">JSON Rpc of Parity </param>
+        /// <param name="webSocketUrl">Web Socket URL of Parity </param>
+        /// <param name="ingressEndPoint">Ingress REal time restful End Point </param>
+        /// <param name="ingressFingerPrint">Ingress Finger Print </param>
+        /// <param name="signer">Payload Signer instance reference </param>
+        /// <param name="ftpMgr">FTPManager instance reference </param>
+        /// <param name="verbose">if detailed logs are required set verbose to true </param>
+        /// <returns>returns instance of RealTimeTelemetryManager</returns>
+        /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
+        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl,string webSocketUrl,  string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose = true)
         {
+            
+
+            if (string.IsNullOrWhiteSpace(nodeId))
+            {
+                throw new ArgumentException("Node ID is empty", nameof(nodeId));
+            }
+
+            if (string.IsNullOrWhiteSpace(jsonRpcUrl))
+            {
+                throw new ArgumentException("RPC URL is empty", nameof(jsonRpcUrl));
+            }
+
+            if (string.IsNullOrWhiteSpace(webSocketUrl))
+            {
+                throw new ArgumentException("Web Socket URL is empty", nameof(webSocketUrl));
+            }
+
+            if (string.IsNullOrWhiteSpace(ingressEndPoint))
+            {
+                throw new ArgumentException("Ingress END Point is empty", nameof(ingressEndPoint));
+            }
+
+            if (string.IsNullOrWhiteSpace(ingressFingerPrint))
+            {
+                throw new ArgumentException("Ingress Finger Point is empty", nameof(ingressFingerPrint));
+            }
+
+            _ftpMgr = ftpMgr ?? throw new ArgumentException("FTP Manager is null", nameof(ftpMgr));
+            _signer = signer ?? throw new ArgumentException("Signer is null", nameof(signer));
+            
             _webSocketUri = webSocketUrl;
             _jsonRpcUrl = jsonRpcUrl;
-            _signer = signer;
             _nodeId = nodeId;
             _verbose = verbose;
 
@@ -36,6 +79,10 @@ namespace TelemetrySigner
             _tti = new TalkToIngress(ingressEndPoint, ingressFingerPrint);
         }
 
+        /// <summary>
+        /// Subscribes to Parity for real time blocks using websocket and posts that to Influx restful end point
+        /// </summary>
+        /// <param name="reAttemptConnection">Flag for re attempting connection control</param>
         public void SubscribeAndPost(bool reAttemptConnection)
         {
             ClientWebSocket webSocket = null;
@@ -64,6 +111,10 @@ namespace TelemetrySigner
             } while (reAttemptConnection) ;
         }
 
+        /// <summary>
+        /// Connects to provided websocker and waits for response
+        /// </summary>
+        /// <param name="webSocket">ClientWebSocket instance reference</param>
         private async Task Connect(ClientWebSocket webSocket)
         {
 
@@ -76,7 +127,10 @@ namespace TelemetrySigner
             await Task.WhenAll(Receive(webSocket), Send(webSocket));
         }
 
-
+        /// <summary>
+        /// Send method for web socket connection
+        /// </summary>
+        /// <param name="webSocket">ClientWebSocket instance reference</param>
         private async Task Send(ClientWebSocket webSocket)
         {
             byte[] buffer = _encoder.GetBytes("{\"method\":\"parity_subscribe\",\"params\":[\"eth_getBlockByNumber\",[\"latest\",true]],\"id\":1,\"jsonrpc\":\"2.0\"}");
@@ -89,6 +143,10 @@ namespace TelemetrySigner
             }
         }
 
+        /// <summary>
+        /// Receive method for web socket connection, It receivesreal time block data from parity and sends that to Ingress restful end point
+        /// </summary>
+        /// <param name="webSocket">ClientWebSocket instance reference</param>
         private async Task Receive(ClientWebSocket webSocket)
         {
             int bufferSize = 4096;
@@ -125,6 +183,11 @@ namespace TelemetrySigner
             }
         }
 
+        /// <summary>
+        /// Function for parsing and signing block data 
+        /// </summary>
+        /// <param name="buffer">block data in byte array</param>
+        /// <returns>returns instance of RealTimeTelemetry if valid data is provided else null</returns>
         private RealTimeTelemetry ParseAndSignData(byte[] buffer)
         {
             try
@@ -190,6 +253,8 @@ namespace TelemetrySigner
 
         }
 
+        
+
         private string GetCurrentClientVersion()
         {
             const string json = "{\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
@@ -210,6 +275,10 @@ namespace TelemetrySigner
             return jsonObjPeers["result"];
         }
 
+        /// <summary>
+        /// Function for sending data to ingress restful end point
+        /// </summary>
+        /// <param name="rtt">Reference of RealTimeTelemetry instance</param>
         private void SendDataToIngress(RealTimeTelemetry rtt)
         {
 
@@ -219,11 +288,27 @@ namespace TelemetrySigner
                 Thread.Sleep(new Random().Next(1, 500));
 
                 //push data to ingress real time telemetry endpoint
-                bool sendSuccess = _tti.SendRequest(JsonConvert.SerializeObject(rtt)).Result;
+                string jsonPayload = JsonConvert.SerializeObject(rtt);
+
+                bool sendSuccess = _tti.SendRequest(jsonPayload).Result;
+
                 if (!sendSuccess)
                 {
-                    // TODO: unable to send real time telemetry to ingress - send by second channel
-                    Console.WriteLine("ERROR: Unable to send to ingress for more then. Use Sending queue on second channel.");
+                    // unable to send real time telemetry to ingress - send by second channel
+                    Console.WriteLine("ERROR: Unable to send to real time telemetry ingress. Sending data on second channel.");
+
+                    string fileName = string.Format("{0}-{1}.json", _nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss"));
+                    try
+                    {
+                        if (!_ftpMgr.transferData(jsonPayload, fileName))
+                        {
+                            Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Data File {0}", fileName);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Error Details {0}", ex.ToString());
+                    }
 
                 }
                 else
