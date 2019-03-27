@@ -21,7 +21,8 @@ test-dotnet:
   tags:
     - short-jobs
   image: microsoft/dotnet:2.2-sdk
-  services: parity/parity:v2.1.3
+  services: 
+    - parity/parity:v2.1.3
   script:
     - parity --config dev --ui-interface all --jsonrpc-interface all  --ws-interface all --ws-origins all --ws-hosts all --jsonrpc-cors all
     - dotnet tool install -g trx2junit
