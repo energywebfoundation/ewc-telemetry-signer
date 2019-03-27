@@ -97,8 +97,8 @@ namespace tests
 
             FTPManager mgr = null;
 
-            PayloadSigner signer = new PayloadSigner("4816d758dd37833a3a5551001dac8a5fa737a342", new FileKeyStore("./"));
-            signer.Init();
+            //PayloadSigner signer = new PayloadSigner("4816d758dd37833a3a5551001dac8a5fa737a342", new FileKeyStore("./"));
+            //signer.Init();
 
             Assert.Throws<ArgumentException>(() =>
             {

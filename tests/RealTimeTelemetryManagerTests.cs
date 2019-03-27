@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Reflection;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 using TelemetrySigner;
 using TelemetrySigner.Models;
@@ -11,7 +13,10 @@ namespace tests
 {
     public class RealTimeTelemetryManagerTests
     {
-        FTPManager ftpMgr;
+        private FTPManager ftpMgr;
+
+        private string parityRPC = "";
+        private string parityWebSock = "";
 
         public RealTimeTelemetryManagerTests()
         {
@@ -21,6 +26,11 @@ namespace tests
             string pubkey = sig.GenerateKeys();
 
             ftpMgr = new FTPManager("foo", "pass", "127.0.0.1", 2222, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
+
+            bool dev = false;
+            parityRPC = dev?"http://127.0.0.1:8545/":"http://parity:8545/";
+            parityWebSock = dev?"ws://127.0.0.1:8546/":"ws://parity:8546/";
+
         }
 
         [Fact]
@@ -151,7 +161,7 @@ namespace tests
                     "ws://127.0.0.1",
                     "https://localhost:5010/api/ingress/realtime",
                     "")]
-       
+
         void InvalidArgumentShouldFail(string nodeId, string jsonRpcURL, string webSocketURL, string ingressEndPoint,
             string ingressFingerPrint)
         {
@@ -217,6 +227,82 @@ namespace tests
             });
             Assert.Null(mgr);
 
+        }
+
+        [Fact]
+        void RealTimeTelemetryGoingOnSecondChannelShouldPass()
+        {
+            string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
+
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
+
+            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(
+                nodeId,
+                "http://127.0.0.1:8545/",
+                "ws://127.0.0.1:8546/",
+                "https://localhost:5010/api/ingress/realtime",
+                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                signer,
+                ftpMgr,
+                true);
+
+            var currentConsoleOut = Console.Out;
+            using (var cop = new ConsoleOutputCapturer())
+            {
+                var tokenSrc = new CancellationTokenSource();
+                CancellationToken ct = tokenSrc.Token;
+
+                ushort status = 0;
+                Task t = Task.Run(() => {  mgr.SubscribeAndPost(false); }, tokenSrc.Token);
+
+                Thread.Sleep(6000);
+
+                string ret = cop.GetOuput();
+                tokenSrc.Cancel();
+                tokenSrc.Dispose();
+                
+                //Assert.Contains("Real time telemetry sent on second channel.", ret);
+            }
+        }
+
+        [Fact]
+        void ForInvalidFTPConnectionSecondChannelShouldFail()
+        {
+            //invalid FTP credentials 
+            FTPManager ftpMgr2 = new FTPManager("2foo", "2pass", "127.0.0.1", 2222, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
+            string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
+
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
+
+            RealTimeTelemetryManager mgr = new RealTimeTelemetryManager(
+                nodeId,
+                "http://127.0.0.1:8545/",
+                "ws://127.0.0.1:8546/",
+                "https://localhost:5010/api/ingress/realtime",
+                "ED:40:5C:C9:E2:71:44:11:78:47:1C:09:6F:28:2E:B5:F9:4D:6E:CE:90:BC:64:5B:ED:9A:46:1F:20:E2:EE:4E",
+                signer,
+                ftpMgr2,
+                true);
+
+            var currentConsoleOut = Console.Out;
+            using (var cop = new ConsoleOutputCapturer())
+            {
+                var tokenSrc = new CancellationTokenSource();
+                CancellationToken ct = tokenSrc.Token;
+
+                ushort status = 0;
+                Task t = Task.Run(() => {  mgr.SubscribeAndPost(false); }, tokenSrc.Token);
+
+                Thread.Sleep(6000);
+
+                string ret = cop.GetOuput();
+                tokenSrc.Cancel();
+                tokenSrc.Dispose();
+                
+                Assert.Contains("Unable to send real time telemetry on second channel.", ret);
+            }
         }
 
     }

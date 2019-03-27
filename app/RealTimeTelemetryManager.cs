@@ -37,9 +37,9 @@ namespace TelemetrySigner
         /// <param name="verbose">if detailed logs are required set verbose to true </param>
         /// <returns>returns instance of RealTimeTelemetryManager</returns>
         /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
-        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl,string webSocketUrl,  string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose = true)
+        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl, string webSocketUrl, string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose = true)
         {
-            
+
 
             if (string.IsNullOrWhiteSpace(nodeId))
             {
@@ -68,7 +68,7 @@ namespace TelemetrySigner
 
             _ftpMgr = ftpMgr ?? throw new ArgumentException("FTP Manager is null", nameof(ftpMgr));
             _signer = signer ?? throw new ArgumentException("Signer is null", nameof(signer));
-            
+
             _webSocketUri = webSocketUrl;
             _jsonRpcUrl = jsonRpcUrl;
             _nodeId = nodeId;
@@ -108,7 +108,7 @@ namespace TelemetrySigner
                     if (reAttemptConnection) { Thread.Sleep(20000); }
                 }
                 //reconnect the websocket right away if connection drops
-            } while (reAttemptConnection) ;
+            } while (reAttemptConnection);
         }
 
         /// <summary>
@@ -215,8 +215,8 @@ namespace TelemetrySigner
                         BlockReceived = currentEPoch,
                         NumPeers = Convert.ToUInt16(numPeers, 16),
                         NumTxInBlock = (ushort)resultObj["transactions"].Count,
-                        GasLimit =  Convert.ToInt64(gasLimit,16),
-                        GasUsed = Convert.ToInt64(gasUsed,16)
+                        GasLimit = Convert.ToInt64(gasLimit, 16),
+                        GasUsed = Convert.ToInt64(gasUsed, 16)
                     };
 
                     RealTimeTelemetry rtt = new RealTimeTelemetry
@@ -253,8 +253,10 @@ namespace TelemetrySigner
 
         }
 
-        
-
+        /// <summary>
+        /// Function for Getting current client version
+        /// </summary>
+        /// <returns>returns client version string</returns>
         private string GetCurrentClientVersion()
         {
             const string json = "{\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
@@ -265,6 +267,10 @@ namespace TelemetrySigner
             return jsonObjPeers["result"];
         }
 
+        /// <summary>
+        /// Function for getting number of peers
+        /// </summary>
+        /// <returns>returns Current number of peers</returns>
         private string GetCurrentNumPeers()
         {
             const string json = "{\"method\":\"net_peerCount\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
@@ -304,6 +310,10 @@ namespace TelemetrySigner
                         {
                             Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Data File {0}", fileName);
                         }
+                        else
+                        {
+                            Console.WriteLine("Real time telemetry sent on second channel. Data File {0}", fileName);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -313,15 +323,17 @@ namespace TelemetrySigner
                 }
                 else
                 {
+                    //success on first channel
                     Console.WriteLine("Real Time Telemetry Block data sent to Ingress Block # {0}", rtt.Payload.BlockNum);
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ERROR Occurred While sending data to Ingress.");
+                Console.WriteLine("ERROR Occurred While sending data to Ingress. {0}", ex.ToString());
             }
 
         }
+
 
     }
 
