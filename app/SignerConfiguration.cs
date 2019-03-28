@@ -43,32 +43,32 @@ namespace TelemetrySigner
         /// <summary>
         /// The property for FTP Host
         /// </summary>
-        public string FTPHost { get; set; }
+        public string FtpHost { get; set; }
 
         /// <summary>
         /// The property for FTP Port
         /// </summary>
-        public int FTPPort { get; set; }
+        public int FtpPort { get; set; }
 
         /// <summary>
         /// The property for  FTP User
         /// </summary>
-        public string FTPUser { get; set; }
+        public string FtpUser { get; set; }
 
         /// <summary>
         /// The property for FTP Pass
         /// </summary>
-        public string FTPPass { get; set; }
+        public string FtpPass { get; set; }
 
         /// <summary>
         /// The property for FTP Finger Print
         /// </summary>
-        public string FTPFingerPrint { get; set; }
+        public string FtpFingerPrint { get; set; }
 
         /// <summary>
         /// The property for FTP Dir
         /// </summary>
-        public string FTPDir { get; set; }
+        public string FtpDir { get; set; }
 
 
 

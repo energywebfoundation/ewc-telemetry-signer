@@ -18,12 +18,12 @@ namespace tests
                 PersistanceDirectory = "./",
                 IngressFingerprint = "A:B:C:D:E:F:Z",
                 ParityWebSocketAddress = "ws:\\127.0.0.1",
-                FTPHost = "127.0.0.1",
-                FTPPort = 22,
-                FTPUser = "uname",
-                FTPPass = "pass",
-                FTPFingerPrint = "A:B:C:D:E:Z",
-                FTPDir = "/",
+                FtpHost = "127.0.0.1",
+                FtpPort = 22,
+                FtpUser = "uname",
+                FtpPass = "pass",
+                FtpFingerPrint = "A:B:C:D:E:Z",
+                FtpDir = "/",
             };
 
             Assert.NotNull(configuration);
