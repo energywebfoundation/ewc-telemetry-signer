@@ -7,15 +7,15 @@ using Xunit;
 
 namespace tests
 {
-    public class FTPManagerTests
+    public class FtpManagerTests
     {
 
-        private string _ftpHost;
-        private int _ftpPort;
-        private string _userName;
-        private string _password;
-        private string _fingerPrint;
-        public FTPManagerTests()
+        private readonly string _ftpHost;
+        private readonly int _ftpPort;
+        private readonly string _userName;
+        private readonly string _password;
+        private readonly string _fingerPrint;
+        public FtpManagerTests()
         {
             PayloadSigner sig = new PayloadSigner(
                 "4816d758dd37833a3a5551001dac8a5fa737a342",
@@ -31,12 +31,12 @@ namespace tests
         }
 
         [Fact]
-        void validFingerPrintShouldUploadFile()
+        void ValidFingerPrintShouldUploadFile()
         {
 
             string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
-            PayloadSigner _signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
-            _signer.Init();
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
 
             List<string> telemetryToSend = new List<string>();
             telemetryToSend.Add("abc 1");
@@ -47,7 +47,7 @@ namespace tests
             {
                 NodeId = nodeId,
                 Payload = telemetryToSend,
-                Signature = _signer.SignPayload(string.Join(string.Empty, telemetryToSend))
+                Signature = signer.SignPayload(string.Join(string.Empty, telemetryToSend))
             };
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
@@ -58,12 +58,12 @@ namespace tests
         }
 
         [Fact]
-        void inValidFingerPrintShouldFail()
+        void InValidFingerPrintShouldFail()
         {
 
             string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
-            PayloadSigner _signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
-            _signer.Init();
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
 
             List<string> telemetryToSend = new List<string>();
             telemetryToSend.Add("abc 1");
@@ -74,7 +74,7 @@ namespace tests
             {
                 NodeId = nodeId,
                 Payload = telemetryToSend,
-                Signature = _signer.SignPayload(string.Join(string.Empty, telemetryToSend))
+                Signature = signer.SignPayload(string.Join(string.Empty, telemetryToSend))
             };
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
@@ -92,7 +92,7 @@ namespace tests
         [InlineData("foo", "pass_123", "127.0.0.1", 999999, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/")]
         [InlineData("foo", "pass_123", "127.0.0.1", 22, "", "/upload/dropzone/")]
         [InlineData("foo", "pass_123", "127.0.0.1", 22, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "")]
-        void invalidArgumentShouldNotCreateInstance(string userName, string password, string sftpHost, int port, string fingerPrint, string workingDir)
+        void InvalidArgumentShouldNotCreateInstance(string userName, string password, string sftpHost, int port, string fingerPrint, string workingDir)
         {
 
             FtpManager mgr = null;
@@ -109,12 +109,12 @@ namespace tests
 
 
         [Fact]
-        void inValidHostAddressShouldFail()
+        void InValidHostAddressShouldFail()
         {
 
             string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
-            PayloadSigner _signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
-            _signer.Init();
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
 
             List<string> telemetryToSend = new List<string>();
             telemetryToSend.Add("abc 1");
@@ -125,7 +125,7 @@ namespace tests
             {
                 NodeId = nodeId,
                 Payload = telemetryToSend,
-                Signature = _signer.SignPayload(string.Join(string.Empty, telemetryToSend))
+                Signature = signer.SignPayload(string.Join(string.Empty, telemetryToSend))
             };
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
@@ -137,12 +137,12 @@ namespace tests
         }
 
         [Fact]
-        void inValidAuthShouldFail()
+        void InValidAuthShouldFail()
         {
 
             string nodeId = "4816d758dd37833a3a5551001dac8a5fa737a342";
-            PayloadSigner _signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
-            _signer.Init();
+            PayloadSigner signer = new PayloadSigner(nodeId, new FileKeyStore("./"));
+            signer.Init();
 
             List<string> telemetryToSend = new List<string>();
             telemetryToSend.Add("abc 1");
@@ -153,7 +153,7 @@ namespace tests
             {
                 NodeId = nodeId,
                 Payload = telemetryToSend,
-                Signature = _signer.SignPayload(string.Join(string.Empty, telemetryToSend))
+                Signature = signer.SignPayload(string.Join(string.Empty, telemetryToSend))
             };
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
