@@ -22,7 +22,7 @@ namespace TelemetrySigner
         private readonly string _nodeId;
         private readonly bool _verbose;
         private readonly UTF8Encoding _encoder = new UTF8Encoding();
-        private readonly FTPManager _ftpMgr;
+        private readonly FtpManager _ftpMgr;
 
         /// <summary>
         /// RealTimeTelemetryManager constructor for RealTimeTelemetryManager instance creation
@@ -37,7 +37,7 @@ namespace TelemetrySigner
         /// <param name="verbose">if detailed logs are required set verbose to true </param>
         /// <returns>returns instance of RealTimeTelemetryManager</returns>
         /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
-        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl,string webSocketUrl,  string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FTPManager ftpMgr, bool verbose = true)
+        public RealTimeTelemetryManager(string nodeId, string jsonRpcUrl,string webSocketUrl,  string ingressEndPoint, string ingressFingerPrint, PayloadSigner signer, FtpManager ftpMgr, bool verbose = true)
         {
             
 
@@ -85,9 +85,7 @@ namespace TelemetrySigner
         /// <param name="reAttemptConnection">Flag for re attempting connection control</param>
         public void SubscribeAndPost(bool reAttemptConnection)
         {
-            ClientWebSocket webSocket = null;
-
-            webSocket = new ClientWebSocket();
+            ClientWebSocket webSocket = new ClientWebSocket();
             do
             {
                 try
@@ -240,14 +238,12 @@ namespace TelemetrySigner
 
                     return rtt;
                 }
-                else
-                {
-                    Console.WriteLine("Unable to Parse\\Sign real Time data. Invalid Data");
-                }
+
+                Console.WriteLine("Unable to Parse\\Sign real Time data. Invalid Data");
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Unable to Parse\\Sign real Time data. Error Occurred {0}", ex.ToString());
+                Console.WriteLine("Unable to Parse\\Sign real Time data. Error Occurred {0}", ex);
             }
             return null;
 
@@ -297,17 +293,17 @@ namespace TelemetrySigner
                     // unable to send real time telemetry to ingress - send by second channel
                     Console.WriteLine("ERROR: Unable to send to real time telemetry ingress. Sending data on second channel.");
 
-                    string fileName = string.Format("{0}-{1}.json", _nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH-mm-ss"));
+                    string fileName = $"{_nodeId}-{DateTime.UtcNow:yyyy-MM-dd_HH-mm-ss}.json";
                     try
                     {
-                        if (!_ftpMgr.transferData(jsonPayload, fileName))
+                        if (!_ftpMgr.TransferData(jsonPayload, fileName))
                         {
                             Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Data File {0}", fileName);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Error Details {0}", ex.ToString());
+                        Console.WriteLine("ERROR: Unable to send real time telemetry on second channel. Error Details {0}", ex);
                     }
 
                 }
@@ -318,7 +314,7 @@ namespace TelemetrySigner
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ERROR Occurred While sending data to Ingress.");
+                Console.WriteLine("ERROR Occurred While sending data to Ingress. {0}",ex);
             }
 
         }

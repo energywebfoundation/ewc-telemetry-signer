@@ -17,7 +17,7 @@ namespace TelemetrySigner
         /// <param name="basePath">Base Path where signing.key and signing.salt will be located</param>
         /// <returns>returns instance of FileKeyStore</returns>
         /// <exception cref="System.ArgumentException">Thrown when base path is null or empty.</exception>
-        /// <exception cref="System.DirectoryNotFoundException">Thrown when base path is invalid.</exception>
+        /// <exception cref="DirectoryNotFoundException">Thrown when base path is invalid.</exception>
         public FileKeyStore(string basePath)
         {
 

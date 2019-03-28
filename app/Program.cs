@@ -18,9 +18,7 @@ namespace TelemetrySigner
         private static SignerConfiguration _configuration;
         private static PayloadSigner _signer;
         private static Timer _flushTimer;
-
-        private static FTPManager _ftpMgr;
-
+        private static FtpManager _ftpMgr;
 
         /// <summary>
         /// Function for getting Environment Variables
@@ -54,12 +52,12 @@ namespace TelemetrySigner
                 IngressFingerprint = GetConfig("TELEMETRY_INGRESS_FINGERPRINT", string.Empty),
                 ParityWebSocketAddress = GetConfig("PARITY_WEB_SOCKET", string.Empty),
 
-                FTPHost = GetConfig("SFTP_HOST", string.Empty),
-                FTPPort = System.Int32.Parse(GetConfig("SFTP_PORT", "22")),
-                FTPUser = GetConfig("SFTP_USER", string.Empty),
-                FTPPass = GetConfig("SFTP_PASS", string.Empty),
-                FTPFingerPrint = GetConfig("SFTP_FINGER_PRINT", string.Empty),
-                FTPDir = GetConfig("FTP_DIR", "/")
+                FtpHost = GetConfig("SFTP_HOST", string.Empty),
+                FtpPort = int.Parse(GetConfig("SFTP_PORT", "22")),
+                FtpUser = GetConfig("SFTP_USER", string.Empty),
+                FtpPass = GetConfig("SFTP_PASS", string.Empty),
+                FtpFingerPrint = GetConfig("SFTP_FINGER_PRINT", string.Empty),
+                FtpDir = GetConfig("FTP_DIR", "/")
             };
 
             Console.WriteLine("Configuration:");
@@ -86,8 +84,8 @@ namespace TelemetrySigner
             _signer.Init();
 
             //init FTP Manager
-            _ftpMgr = new FTPManager(_configuration.FTPUser, _configuration.FTPPass, _configuration.FTPHost, _configuration.FTPPort,
-            _configuration.FTPFingerPrint, _configuration.FTPDir);
+            _ftpMgr = new FtpManager(_configuration.FtpUser, _configuration.FtpPass, _configuration.FtpHost, _configuration.FtpPort,
+            _configuration.FtpFingerPrint, _configuration.FtpDir);
 
             Task.Run(() =>
             {
@@ -105,12 +103,9 @@ namespace TelemetrySigner
                 _configuration.ParityEndpoint,
                 _configuration.ParityWebSocketAddress,
                 (_configuration.IngressHost + "/api/ingress/realtime"),
-                _configuration.IngressFingerprint, _signer, _ftpMgr, true);
+                _configuration.IngressFingerprint, _signer, _ftpMgr);
 
             ps.SubscribeAndPost(true);
-
-            
-
 
         }
 
@@ -156,17 +151,17 @@ namespace TelemetrySigner
                 {
                     // unable to send to ingress for 5 minutes - send by second channel
                     Console.WriteLine("ERROR: Unable to send to ingress for more then 5 minutes. Sending queue on second channel.");
-                    string fileName = string.Format("{0}-{1}.json", _configuration.NodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
+                    string fileName = $"{_configuration.NodeId}-{DateTime.UtcNow:yyyy-MM-dd_HH:mm:ss}.json";
                     try
                     {
-                        if (!_ftpMgr.transferData(jsonPayload, fileName))
+                        if (!_ftpMgr.TransferData(jsonPayload, fileName))
                         {
                             Console.WriteLine("ERROR: Unable to send data on second channel. Data File {0}", fileName);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("ERROR: Unable to send data on second channel. Error Details {0}", ex.ToString());
+                        Console.WriteLine("ERROR: Unable to send data on second channel. Error Details {0}", ex);
                     }
 
                 }

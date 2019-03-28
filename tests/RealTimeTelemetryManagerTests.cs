@@ -11,7 +11,7 @@ namespace tests
 {
     public class RealTimeTelemetryManagerTests
     {
-        FTPManager ftpMgr;
+        FtpManager ftpMgr;
 
         public RealTimeTelemetryManagerTests()
         {
@@ -20,7 +20,7 @@ namespace tests
                 new FileKeyStore("./"));
             string pubkey = sig.GenerateKeys();
 
-            ftpMgr = new FTPManager("foo", "pass", "127.0.0.1", 2222, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
+            ftpMgr = new FtpManager("foo", "pass", "127.0.0.1", 2222, "78:72:96:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
         }
 
         [Fact]

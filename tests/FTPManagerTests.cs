@@ -52,7 +52,7 @@ namespace tests
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
 
-            FTPManager fm = new FTPManager(_userName, _password, _ftpHost, _ftpPort, _fingerPrint, "/upload/dropzone/");
+            FtpManager fm = new FtpManager(_userName, _password, _ftpHost, _ftpPort, _fingerPrint, "/upload/dropzone/");
             string fileName = string.Format("{0}-{1}.json", nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
             // Assert.True(fm.transferData(jsonPayload, fileName));
         }
@@ -79,7 +79,7 @@ namespace tests
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
 
-            FTPManager fm = new FTPManager(_userName, _password, _ftpHost, _ftpPort, "38:32:36:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
+            FtpManager fm = new FtpManager(_userName, _password, _ftpHost, _ftpPort, "38:32:36:8e:ad:ac:8c:31:57:b4:80:ba:2d:e4:88:9d", "/upload/dropzone/");
             string fileName = string.Format("{0}-{1}.json", nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
             //Assert.True(!fm.transferData(jsonPayload, fileName));
         }
@@ -95,14 +95,14 @@ namespace tests
         void invalidArgumentShouldNotCreateInstance(string userName, string password, string sftpHost, int port, string fingerPrint, string workingDir)
         {
 
-            FTPManager mgr = null;
+            FtpManager mgr = null;
 
             PayloadSigner signer = new PayloadSigner("4816d758dd37833a3a5551001dac8a5fa737a342", new FileKeyStore("./"));
             signer.Init();
 
             Assert.Throws<ArgumentException>(() =>
             {
-                mgr = new FTPManager(userName, password, sftpHost, port, fingerPrint, workingDir);
+                mgr = new FtpManager(userName, password, sftpHost, port, fingerPrint, workingDir);
             });
             Assert.Null(mgr);
         }
@@ -130,9 +130,9 @@ namespace tests
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
 
-            FTPManager fm = new FTPManager(_userName, _password, "127.0.0.1", 8081, _fingerPrint, "/upload/dropzone/");
+            FtpManager fm = new FtpManager(_userName, _password, "127.0.0.1", 8081, _fingerPrint, "/upload/dropzone/");
             string fileName = string.Format("{0}-{1}.json", nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
-            Assert.True(!fm.transferData(jsonPayload, fileName));
+            Assert.True(!fm.TransferData(jsonPayload, fileName));
 
         }
 
@@ -158,9 +158,9 @@ namespace tests
 
             string jsonPayload = JsonConvert.SerializeObject(pkt);
 
-            FTPManager fm = new FTPManager("foo21", "pass12", _ftpHost, _ftpPort, _fingerPrint, "/upload/dropzone/");
+            FtpManager fm = new FtpManager("foo21", "pass12", _ftpHost, _ftpPort, _fingerPrint, "/upload/dropzone/");
             string fileName = string.Format("{0}-{1}.json", nodeId, DateTime.UtcNow.ToString("yyyy-MM-dd_HH:mm:ss"));
-            Assert.True(!fm.transferData(jsonPayload, fileName));
+            Assert.True(!fm.TransferData(jsonPayload, fileName));
 
         }
     }

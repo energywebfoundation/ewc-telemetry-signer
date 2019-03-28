@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Security;
@@ -51,7 +50,7 @@ namespace TelemetrySigner
 
 
             // Use the default handler when no specific handler is passed in.
-            var handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = PinPublicKey };
+            HttpClientHandler handler = new HttpClientHandler { ServerCertificateCustomValidationCallback = PinPublicKey };
             _client = new HttpClient(testHandler ?? handler);
 
         }

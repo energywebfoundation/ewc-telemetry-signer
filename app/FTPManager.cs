@@ -1,25 +1,23 @@
-
-
 using System;
 using System.IO;
-using System.Net;
-using System.Security.Cryptography.X509Certificates;
+using System.Net.Sockets;
 using System.Text;
 using Renci.SshNet;
+using Renci.SshNet.Common;
 
 namespace TelemetrySigner
 {
     /// <summary>
     /// FTPManager class contains functionality for uploading files to SFTP Host
     /// </summary>
-    public class FTPManager
+    public class FtpManager
     {
-        private string _userName;
-        private string _password;
-        private string _sftpHost;
-        private int _port;
-        private string _fingerPrint;
-        private string _workingDir;
+        private readonly string _userName;
+        private readonly string _password;
+        private readonly string _sftpHost;
+        private readonly int _port;
+        private readonly string _fingerPrint;
+        private readonly string _workingDir;
 
         /// <summary>
         /// FTPManager constructor for FTPManager instance creation
@@ -32,7 +30,7 @@ namespace TelemetrySigner
         /// <param name="workingDir">SFTP workingDir where file will be uploaded</param>
         /// <returns>returns instance of FTPManager</returns>
         /// <exception cref="System.ArgumentException">Thrown when any of provided argument is null or empty.</exception>
-        public FTPManager(string userName, string password, string sftpHost, int port, string fingerPrint, string workingDir)
+        public FtpManager(string userName, string password, string sftpHost, int port, string fingerPrint, string workingDir)
         {
             if (string.IsNullOrWhiteSpace(userName))
             {
@@ -63,7 +61,7 @@ namespace TelemetrySigner
             _password = password;
             _sftpHost = sftpHost;
             _port = port;
-            _fingerPrint = fingerPrint.Replace(":", string.Empty).ToUpperInvariant(); ;
+            _fingerPrint = fingerPrint.Replace(":", string.Empty).ToUpperInvariant();
             _workingDir = workingDir;
         }
 
@@ -73,7 +71,7 @@ namespace TelemetrySigner
         /// <param name="data">File data to be uploaded</param>
         /// <param name="fileName">File name to be used</param>
         /// <returns>returns true if operation is successful else false</returns>
-        public bool transferData(string data, string fileName)
+        public bool TransferData(string data, string fileName)
         {
             Console.WriteLine("Creating client and connecting");
             try
@@ -104,24 +102,24 @@ namespace TelemetrySigner
                     stream.Position = 0;
 
                     //uploading file
-                    client.UploadFile(stream, fileName, null);
+                    client.UploadFile(stream, fileName);
 
                     client.Disconnect();
                 }
             }
-            catch (Renci.SshNet.Common.SshConnectionException ex)
+            catch (SshConnectionException ex)
             {
-                Console.WriteLine("Cannot connect to the server. {0}", ex.ToString());
+                Console.WriteLine("Cannot connect to the server. {0}", ex);
                 return false;
             }
-            catch (System.Net.Sockets.SocketException ex)
+            catch (SocketException ex)
             {
-                Console.WriteLine("Unable to establish the socket. {0}", ex.ToString());
+                Console.WriteLine("Unable to establish the socket. {0}", ex);
                 return false;
             }
-            catch (Renci.SshNet.Common.SshAuthenticationException ex)
+            catch (SshAuthenticationException ex)
             {
-                Console.WriteLine("Authentication of SSH session failed. {0}", ex.ToString());
+                Console.WriteLine("Authentication of SSH session failed. {0}", ex);
                 return false;
             }
             return true;
