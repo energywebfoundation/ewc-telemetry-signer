@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using FluentAssertions;
 using TelemetrySigner;
 using Xunit;
