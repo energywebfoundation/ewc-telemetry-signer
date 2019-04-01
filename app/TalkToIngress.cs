@@ -72,8 +72,12 @@ namespace TelemetrySigner
                 HttpResponseMessage response = await _client.PostAsync(_endPoint, //$"{_url}/api/ingress/influx", 
                     new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 
+                if (!response.IsSuccessStatusCode)
+                {
+                    throw new Exception("HTTP Status code " + response.StatusCode);
+                }
 
-                return response.StatusCode == HttpStatusCode.Accepted;
+                return true;
             }
             catch (Exception ex)
             {

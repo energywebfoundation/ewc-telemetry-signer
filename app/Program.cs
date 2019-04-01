@@ -145,6 +145,7 @@ namespace TelemetrySigner
             bool sendSuccess = tti.SendRequest(jsonPayload).Result;
             if (!sendSuccess)
             {
+                Console.WriteLine("Unable to flush. Re-queuing...");
                 telemetryToSend.ForEach(_globalQueue.Enqueue);
 
                 if (DateTime.UtcNow - _lastFlush > TimeSpan.FromMinutes(5))
@@ -165,7 +166,6 @@ namespace TelemetrySigner
                     }
 
                 }
-                _lastFlush = DateTime.UtcNow;
 
             }
             else
