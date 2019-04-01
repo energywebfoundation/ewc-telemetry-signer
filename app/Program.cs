@@ -173,10 +173,12 @@ namespace TelemetrySigner
                 if (_globalQueue.Count > 250)
                 {
                     // increase processing speed to 2 seconds
+                    Console.WriteLine("Increasing push speed due to queue size");
                     _flushTimer.Change(2000, 2000);
                 }
                 else // queue is small enough to get processed. back to normal speed
                 {
+                    Console.WriteLine("Decreasing push speed due to queue size");
                     _flushTimer.Change(10000, 10000);
                 }
                 _lastFlush = DateTime.UtcNow;
