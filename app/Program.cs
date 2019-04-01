@@ -19,6 +19,7 @@ namespace TelemetrySigner
         private static PayloadSigner _signer;
         private static Timer _flushTimer;
         private static FtpManager _ftpMgr;
+        private static bool _flushHighspeed;
 
         /// <summary>
         /// Function for getting Environment Variables
@@ -41,6 +42,7 @@ namespace TelemetrySigner
 
             Console.WriteLine("Telemetry signer starting...");
             _lastFlush = DateTime.UtcNow;
+            _flushHighspeed = false;
 
             _configuration = new SignerConfiguration
             {
@@ -129,7 +131,7 @@ namespace TelemetrySigner
                 telemetryToSend.Add(lineFromQueue);
             }
             
-            Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue.");
+            Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue." + (_flushHighspeed ? " [HighSpeed]" : ""));
 
             TelemetryPacket pkt = new TelemetryPacket
             {
@@ -170,16 +172,18 @@ namespace TelemetrySigner
             }
             else
             {
-                if (_globalQueue.Count > 250)
+                if (_globalQueue.Count > 250 && !_flushHighspeed)
                 {
                     // increase processing speed to 2 seconds
                     Console.WriteLine("Increasing push speed due to queue size");
                     _flushTimer.Change(2000, 2000);
+                    _flushHighspeed = true;
                 }
-                else // queue is small enough to get processed. back to normal speed
+                else if(_globalQueue.Count < 250 && _flushHighspeed) // queue is small enough to get processed. back to normal speed
                 {
                     Console.WriteLine("Decreasing push speed due to queue size");
                     _flushTimer.Change(10000, 10000);
+                    _flushHighspeed = false;
                 }
                 _lastFlush = DateTime.UtcNow;
             }
