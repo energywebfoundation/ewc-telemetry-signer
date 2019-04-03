@@ -26,7 +26,7 @@ test-dotnet:
     - export PATH="$PATH:/root/.dotnet/tools"
     - dotnet restore
     - dotnet build
-    - dotnet test --no-build -v=normal tests /p:CollectCoverage=true /p:Exclude="[xunit.*]*" --logger "trx;LogFileName=TestResults.trx"
+    - dotnet test --no-build -v=normal tests --logger "trx;LogFileName=TestResults.trx" /p:CollectCoverage=true /p:Exclude="[xunit.*]*"
     - trx2junit tests/TestResults/TestResults.trx
   artifacts:
     reports:
