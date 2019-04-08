@@ -44,13 +44,13 @@ package-docker:
     - docker:dind
   script:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
-    - docker login -u core-platform@energyweb.org -p "$SECRET_EWF_DOCKER"
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME  .
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:latest
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME energyweb/telemetry-signer:latest
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:latest
+    - echo "$SECRET_EWF_DOCKER" > ~/.docker/config.json
     - docker push energyweb/telemetry-signer:latest
     - docker push energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
 
