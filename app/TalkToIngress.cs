@@ -17,7 +17,7 @@ namespace TelemetrySigner
         private readonly string _fingerprint;
 
         private readonly string _endPoint;
-        private readonly HttpMessageHandler _handler;
+        private readonly Func<HttpMessageHandler> _handler;
 
         /// <summary>
         /// TalkToIngress constructor for TalkToIngress instance creation
@@ -50,7 +50,8 @@ namespace TelemetrySigner
 
 
             // Use the default handler when no specific handler is passed in.
-            _handler = testHandler ?? new HttpClientHandler { ServerCertificateCustomValidationCallback = PinPublicKey };
+            _handler = () => testHandler ?? new HttpClientHandler
+                                 {ServerCertificateCustomValidationCallback = PinPublicKey};
 
         }
 
@@ -68,7 +69,7 @@ namespace TelemetrySigner
 
             try
             {
-                using (HttpClient client = new HttpClient(_handler))
+                using (HttpClient client = new HttpClient(_handler.Invoke()))
                 {
                     HttpResponseMessage response = await client.PostAsync(_endPoint, //$"{_url}/api/ingress/influx", 
                         new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
