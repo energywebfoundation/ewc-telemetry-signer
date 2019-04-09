@@ -93,7 +93,7 @@ namespace tests
             bool urlCorrect = false;
             
             // Prepare mock
-            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Loose);
             handlerMock
                 .Protected()
                 // Setup the PROTECTED method to mock
@@ -146,7 +146,7 @@ namespace tests
             bool urlCorrect = false;
             
             // Prepare mock
-            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+            var handlerMock = new Mock<HttpMessageHandler>(MockBehavior.Loose);
             handlerMock
                 .Protected()
                 // Setup the PROTECTED method to mock
@@ -169,6 +169,7 @@ namespace tests
                     };
                 })
                 .Verifiable();
+            
             
             
             // run test code
