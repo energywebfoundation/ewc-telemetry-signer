@@ -87,7 +87,12 @@ namespace TelemetrySigner
                             stringBuilder.AppendFormat("{0:X2}", b);
 
                         string hashString = stringBuilder.ToString();
-                        e.CanTrust = (hashString == _fingerPrint);
+                        bool fingerprintMatch = hashString == _fingerPrint;
+                        if (!fingerprintMatch)
+                        {
+                            Console.WriteLine($"Second Channel fingerprint don't match!\n\tExp: {_fingerPrint}\n\tGot: {hashString}");
+                        }
+                        e.CanTrust = fingerprintMatch;
                     };
 
                     client.Connect();
