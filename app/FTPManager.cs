@@ -102,12 +102,15 @@ namespace TelemetrySigner
 
                     //data conversion to memory stream for writing to sftp
                     byte[] byteData = Encoding.ASCII.GetBytes(data);
-                    var stream = new MemoryStream();
-                    stream.Write(byteData, 0, byteData.Length);
-                    stream.Position = 0;
+                    using (var stream = new MemoryStream())
+                    {
+                        stream.Write(byteData, 0, byteData.Length);
+                        stream.Position = 0;
 
-                    //uploading file
-                    client.UploadFile(stream, fileName);
+                        //uploading file
+                        client.UploadFile(stream, fileName);    
+                    }
+                    
 
                     client.Disconnect();
                 }

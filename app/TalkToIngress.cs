@@ -71,6 +71,7 @@ namespace TelemetrySigner
             {
                 using (HttpClient client = new HttpClient(_handler.Invoke()))
                 {
+                    client.Timeout = TimeSpan.FromSeconds(5); // 5 second timeout
                     HttpResponseMessage response = await client.PostAsync(_endPoint, //$"{_url}/api/ingress/influx", 
                         new StringContent(jsonPayload, Encoding.UTF8, "application/json"));
 

@@ -147,9 +147,7 @@ namespace TelemetrySigner
             bool sendSuccess = tti.SendRequest(jsonPayload).Result;
             if (!sendSuccess)
             {
-                Console.WriteLine("Unable to flush. Re-queuing...");
-                telemetryToSend.ForEach(_globalQueue.Enqueue);
-
+                
                 if (DateTime.UtcNow - _lastFlush > TimeSpan.FromMinutes(5))
                 {
                     // unable to send to ingress for 5 minutes - send by second channel
@@ -160,13 +158,26 @@ namespace TelemetrySigner
                         if (!_ftpMgr.TransferData(jsonPayload, fileName))
                         {
                             Console.WriteLine("ERROR: Unable to send data on second channel. Data File {0}", fileName);
+                            
+                            // second channel also not available - requeue
+                            Console.WriteLine("Unable to flush to second channel - re queueing");
+                            telemetryToSend.ForEach(_globalQueue.Enqueue);
                         }
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine("ERROR: Unable to send data on second channel. Error Details {0}", ex);
+                        
+                        // second channel also not available - requeue
+                        Console.WriteLine("Unable to flush to second channel - re queueing");
+                        telemetryToSend.ForEach(_globalQueue.Enqueue);
                     }
-
+                }
+                else
+                {
+                    // 5min second channel delay not reached -> re-queue
+                    Console.WriteLine("Unable to flush. Re-queuing...");
+                    telemetryToSend.ForEach(_globalQueue.Enqueue);
                 }
 
             }
