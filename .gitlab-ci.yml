@@ -50,9 +50,10 @@ package-docker:
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:latest
-    - echo "$SECRET_EWF_DOCKER" > ~/.docker/config.json
-    - docker push energyweb/telemetry-signer:latest
-    - docker push energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
+    #Disable EWF docker push
+    #- echo "$SECRET_EWF_DOCKER" > ~/.docker/config.json
+    #- docker push energyweb/telemetry-signer:latest
+    #- docker push energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
 
 
 
