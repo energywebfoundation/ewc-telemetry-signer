@@ -26,7 +26,8 @@ test-dotnet:
     - export PATH="$PATH:/root/.dotnet/tools"
     - dotnet restore
     - dotnet build
-    - dotnet test --no-build -v=normal tests /p:CollectCoverage=true /p:Exclude="[xunit.*]*" --logger "trx;LogFileName=TestResults.trx"
+    - dotnet test --no-build -v=normal tests --logger "trx;LogFileName=TestResults.trx" /p:CollectCoverage=true /p:Exclude="[xunit.*]*"
+    - mv tests/TestResults/*.trx tests/TestResults/TestResults.trx
     - trx2junit tests/TestResults/TestResults.trx
   artifacts:
     reports:
@@ -45,7 +46,14 @@ package-docker:
     - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN $CI_REGISTRY
     - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME  .
     - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE:latest
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME energyweb/telemetry-signer:latest
+    - docker tag $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
     - docker push $CI_REGISTRY_IMAGE:latest
+    #Disable EWF docker push
+    #- echo "$SECRET_EWF_DOCKER" > ~/.docker/config.json
+    #- docker push energyweb/telemetry-signer:latest
+    #- docker push energyweb/telemetry-signer:$CI_COMMIT_REF_NAME
+
 
 

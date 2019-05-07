@@ -19,6 +19,7 @@ namespace TelemetrySigner
         private static PayloadSigner _signer;
         private static Timer _flushTimer;
         private static FtpManager _ftpMgr;
+        private static bool _flushHighspeed;
 
         /// <summary>
         /// Function for getting Environment Variables
@@ -41,6 +42,7 @@ namespace TelemetrySigner
 
             Console.WriteLine("Telemetry signer starting...");
             _lastFlush = DateTime.UtcNow;
+            _flushHighspeed = false;
 
             _configuration = new SignerConfiguration
             {
@@ -129,7 +131,7 @@ namespace TelemetrySigner
                 telemetryToSend.Add(lineFromQueue);
             }
             
-            Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue.");
+            Console.WriteLine($"Flushing {telemetryToSend.Count} to ingress. {_globalQueue.Count} still in queue." + (_flushHighspeed ? " [HighSpeed]" : ""));
 
             TelemetryPacket pkt = new TelemetryPacket
             {
@@ -145,8 +147,7 @@ namespace TelemetrySigner
             bool sendSuccess = tti.SendRequest(jsonPayload).Result;
             if (!sendSuccess)
             {
-                telemetryToSend.ForEach(_globalQueue.Enqueue);
-
+                
                 if (DateTime.UtcNow - _lastFlush > TimeSpan.FromMinutes(5))
                 {
                     // unable to send to ingress for 5 minutes - send by second channel
@@ -157,27 +158,43 @@ namespace TelemetrySigner
                         if (!_ftpMgr.TransferData(jsonPayload, fileName))
                         {
                             Console.WriteLine("ERROR: Unable to send data on second channel. Data File {0}", fileName);
+                            
+                            // second channel also not available - requeue
+                            Console.WriteLine("Unable to flush to second channel - re queueing");
+                            telemetryToSend.ForEach(_globalQueue.Enqueue);
                         }
                     }
                     catch (Exception ex)
                     {
                         Console.WriteLine("ERROR: Unable to send data on second channel. Error Details {0}", ex);
+                        
+                        // second channel also not available - requeue
+                        Console.WriteLine("Unable to flush to second channel - re queueing");
+                        telemetryToSend.ForEach(_globalQueue.Enqueue);
                     }
-
                 }
-                _lastFlush = DateTime.UtcNow;
+                else
+                {
+                    // 5min second channel delay not reached -> re-queue
+                    Console.WriteLine("Unable to flush. Re-queuing...");
+                    telemetryToSend.ForEach(_globalQueue.Enqueue);
+                }
 
             }
             else
             {
-                if (_globalQueue.Count > 250)
+                if (_globalQueue.Count > 250 && !_flushHighspeed)
                 {
                     // increase processing speed to 2 seconds
+                    Console.WriteLine("Increasing push speed due to queue size");
                     _flushTimer.Change(2000, 2000);
+                    _flushHighspeed = true;
                 }
-                else // queue is small enough to get processed. back to normal speed
+                else if(_globalQueue.Count < 250 && _flushHighspeed) // queue is small enough to get processed. back to normal speed
                 {
+                    Console.WriteLine("Decreasing push speed due to queue size");
                     _flushTimer.Change(10000, 10000);
+                    _flushHighspeed = false;
                 }
                 _lastFlush = DateTime.UtcNow;
             }

@@ -87,7 +87,12 @@ namespace TelemetrySigner
                             stringBuilder.AppendFormat("{0:X2}", b);
 
                         string hashString = stringBuilder.ToString();
-                        e.CanTrust = (hashString == _fingerPrint);
+                        bool fingerprintMatch = hashString == _fingerPrint;
+                        if (!fingerprintMatch)
+                        {
+                            Console.WriteLine($"Second Channel fingerprint don't match!\n\tExp: {_fingerPrint}\n\tGot: {hashString}");
+                        }
+                        e.CanTrust = fingerprintMatch;
                     };
 
                     client.Connect();
@@ -97,12 +102,15 @@ namespace TelemetrySigner
 
                     //data conversion to memory stream for writing to sftp
                     byte[] byteData = Encoding.ASCII.GetBytes(data);
-                    var stream = new MemoryStream();
-                    stream.Write(byteData, 0, byteData.Length);
-                    stream.Position = 0;
+                    using (var stream = new MemoryStream())
+                    {
+                        stream.Write(byteData, 0, byteData.Length);
+                        stream.Position = 0;
 
-                    //uploading file
-                    client.UploadFile(stream, fileName);
+                        //uploading file
+                        client.UploadFile(stream, fileName);    
+                    }
+                    
 
                     client.Disconnect();
                 }
