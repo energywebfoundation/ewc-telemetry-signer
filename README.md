@@ -23,3 +23,11 @@ Receives telemetry from the local telegraf process signs it with the host key an
 To obtain coverage and test report: `dotnet test --no-build -v=normal tests --logger "trx;LogFileName=TestResults.trx" /p:CollectCoverage=true /p:Exclude="[xunit.*]*"`
 
 Remark: During the test the console will print out several exceptions/errors. This is due negative testing and expected.
+
+## Build Docker Image
+
+To locally build the docer image use:
+
+`docker build -t local-signer -f Local.Dockerfile .`
+
+This will also run the tests and report on coverage.
