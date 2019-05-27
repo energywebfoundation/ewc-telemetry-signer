@@ -9,6 +9,9 @@ namespace TelemetrySigner
     /// </summary>
     public class TelegrafSocketReader
     {
+
+        private static long MAX_QUEUE_SIZE = 15000;
+        
         private readonly string _namedPipe;
 
         /// <summary>
@@ -44,6 +47,11 @@ namespace TelemetrySigner
                 {
                     // read forever from pipe
                     string line = socketStream.ReadLine();
+                    if (telemetryQueue.Count > MAX_QUEUE_SIZE)
+                    {
+                        // Dequeue one item before adding another one when limit reached
+                        telemetryQueue.TryDequeue(out _);
+                    }
                     telemetryQueue.Enqueue(line);
                 }
             }
