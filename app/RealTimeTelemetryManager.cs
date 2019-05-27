@@ -14,7 +14,6 @@ namespace TelemetrySigner
     /// </summary>
     public class RealTimeTelemetryManager
     {
-        private readonly WebClient _webClient;
         private readonly string _jsonRpcUrl;
         private readonly string _webSocketUri;
         private readonly TalkToIngress _tti;
@@ -74,7 +73,6 @@ namespace TelemetrySigner
             _nodeId = nodeId;
             _verbose = verbose;
 
-            _webClient = new WebClient();
 
             _tti = new TalkToIngress(ingressEndPoint, ingressFingerPrint);
         }
@@ -253,22 +251,29 @@ namespace TelemetrySigner
 
         private string GetCurrentClientVersion()
         {
-            const string json = "{\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
-            _webClient.Headers[HttpRequestHeader.ContentType] = "application/json";
-            string currentVersionResponse = _webClient.UploadString(_jsonRpcUrl, "POST", json);
+            using (WebClient webClient = new WebClient())
+            {
+                const string json = "{\"method\":\"web3_clientVersion\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
+                webClient.Headers[HttpRequestHeader.ContentType] = "application/json";
+                string currentVersionResponse = webClient.UploadString(_jsonRpcUrl, "POST", json);
 
-            dynamic jsonObjPeers = JsonConvert.DeserializeObject(currentVersionResponse.Trim());
-            return jsonObjPeers["result"];
+                dynamic jsonObjPeers = JsonConvert.DeserializeObject(currentVersionResponse.Trim());
+                return jsonObjPeers["result"];    
+            }
+            
         }
 
         private string GetCurrentNumPeers()
         {
-            const string json = "{\"method\":\"net_peerCount\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
-            _webClient.Headers[HttpRequestHeader.ContentType] = "application/json";
-            string numOfPeersResponse = _webClient.UploadString(_jsonRpcUrl, "POST", json);
+            using (WebClient webClient = new WebClient())
+            {
+                const string json = "{\"method\":\"net_peerCount\",\"params\":[],\"id\":1,\"jsonrpc\":\"2.0\"}";
+                webClient.Headers[HttpRequestHeader.ContentType] = "application/json";
+                string numOfPeersResponse = webClient.UploadString(_jsonRpcUrl, "POST", json);
 
-            dynamic jsonObjPeers = JsonConvert.DeserializeObject(numOfPeersResponse.Trim());
-            return jsonObjPeers["result"];
+                dynamic jsonObjPeers = JsonConvert.DeserializeObject(numOfPeersResponse.Trim());
+                return jsonObjPeers["result"];
+            }
         }
 
         /// <summary>
